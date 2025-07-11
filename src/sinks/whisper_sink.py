@@ -9,6 +9,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from queue import Queue
 from typing import List
+import discord
 
 import speech_recognition as sr
 import torch
@@ -21,7 +22,7 @@ WHISPER_LANGUAGE = "en"
 WHISPER__PRECISION = "float32"
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-
+print(DEVICE)
 # Set the model to evaluation mode (important for inference)
 logger = logging.getLogger(__name__)
 
@@ -72,6 +73,7 @@ class WhisperSink(Sink):
         player_map={},
         data_length=50000,
         max_speakers=-1,
+        bot
     ):
         self.queue = transcript_queue
         self.transcription_output_queue = asyncio.Queue()
@@ -93,6 +95,7 @@ class WhisperSink(Sink):
         self.voice_queue = Queue()
         self.executor = ThreadPoolExecutor(max_workers=8)  # TODO: Adjust this
         self.player_map = player_map
+        self.bot=bot
 
     def start_voice_thread(self, on_exception=None):
         def thread_exception_hook(args):
@@ -273,6 +276,75 @@ class WhisperSink(Sink):
                     speaker = future_to_speaker[future]
                     try:
                         transcription = future.result()
+                        text=transcription.lower().strip()
+
+                        nameDictionary={
+                            "ryan":"773550459687403541",
+                            "noah":"1393044419661402183",
+                            "hunter":"774864083110592533",
+                            "branson":"1214407016299241552",
+                            "nate":"864723222191407165",
+                            "nathen":"864723222191407165",
+                            "loic":"1124004427347533926",
+                            "grungy":"665652720681615373",
+                            "gauge":"665652720681615373",
+                            "adrian":"582709566811406356",
+                            "kazuto":"773550459687403541",
+                            "bryson":"1333270349596463155",
+                            "logan":"567809027506044942",
+                            "kiwi":"671111921537122333",
+                            "coast":"671111921537122333",
+
+
+                        }
+                        async def delayRemoveRole(role_id, delay):
+                            await asyncio.sleep(delay)
+                            await member.remove_roles(role_id)
+                            print(f"Removed {role.name} from {member.display_name}")
+
+                        def convertName(arg):
+                            for i in nameDictionary.keys():
+                                if i in arg.lower():
+                                    return nameDictionary[i]
+                                
+                        if "test" in text:
+                            idx = text.index("test") + len("test")
+                            generalChat=self.vc.guild.get_channel(624821823414075394)
+                            asyncio.run_coroutine_threadsafe(generalChat.send(transcription), self.loop)
+
+                        if "shut up" in text:
+                            idx = text.index("shut up") + len("shut up")
+                            arg = str(text[idx:]).split(" ")[1]
+                            print(arg)
+                            user_id=int(convertName(arg))
+                            future = asyncio.run_coroutine_threadsafe(self.bot.get_guild(624821823414075392).fetch_member(user_id), self.loop)
+                            member = future.result()
+                            role = discord.utils.get(member.guild.roles, name="Shut up")
+                            role= member.guild.get_role(1392632571153879060)
+                            if role is None:
+                                print("Role not found.")
+                            else:
+                                asyncio.run_coroutine_threadsafe(member.add_roles(role), self.loop)
+                                asyncio.run_coroutine_threadsafe(delayRemoveRole(role,300), self.loop)
+                                print(f"Added {role.name} to {member.display_name}")
+
+                        if "what do you do with a soccer ball" in text:
+                            idx = text.index("what do you do with a soccer ball") + len("what do you do with a soccer ball")
+                            arg = str(text[idx:]).split(" ")[1]
+                            user_id=int(convertName(arg))
+                            future = asyncio.run_coroutine_threadsafe(self.bot.get_guild(624821823414075392).fetch_member(user_id), self.loop)
+                            member = future.result()
+                            asyncio.run_coroutine_threadsafe(member.move_to(None), self.loop)
+                            
+                        if "I'm omni-ing it" in text:
+                            idx = text.index("I'm omni-ing it") + len("I'm omni-ing it")
+                            user_id=str(speaker.user)
+                            print(str(user_id)+" is omni-ing it")
+                            asyncio.run_coroutine_threadsafe(generalChat.send("<@"+user_id+"> is Omni-ing it."), self.loop)
+
+                            #asyncio.run_coroutine_threadsafe(, self.loop)
+                            #asyncio.run_coroutine_threadsafe(channel.send("/shutup "+ "<@"+convertName(arg)+">"), self.loop)
+
                         current_time = time.time()
                         speaker_new_bytes = speaker.new_bytes
                         # Remove speaker once returned. 

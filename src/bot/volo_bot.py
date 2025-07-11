@@ -88,14 +88,14 @@ class VoloBot(discord.Bot):
             transcript_queue,
             self.loop,
             data_length=50000,
-            max_speakers=10,
+            max_speakers=7,
             transcriber_type=self.transcriber_type,
             player_map=self.player_map,
+            bot=self
         )
 
         self.guild_to_helper[ctx.guild_id].vc.start_recording(
             whisper_sink, on_stop_record_callback, ctx)
-
         def on_thread_exception(e):
             logger.warning(
                 f"Whisper sink thread exception for guild {ctx.guild_id}. Retry in 5 seconds...\n{e}")
@@ -103,7 +103,6 @@ class VoloBot(discord.Bot):
 
             # retry in 5 seconds
             self.loop.call_later(5, self.start_recording, ctx)
-
         whisper_sink.start_voice_thread(on_exception=on_thread_exception)
 
         self.guild_whisper_sinks[ctx.guild_id] = whisper_sink
@@ -120,7 +119,6 @@ class VoloBot(discord.Bot):
             logger.debug("Cancelling whisper message task.")
             whisper_message_task.cancel()
             del self.guild_whisper_message_tasks[guild_id]
-
     def cleanup_sink(self, ctx: discord.context.ApplicationContext):
         guild_id = ctx.guild_id
         self._close_and_clean_sink_for_guild(guild_id)
