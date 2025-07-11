@@ -95,15 +95,15 @@ if __name__ == "__main__":
     @bot.slash_command(name="connect", description="Add VOLO to your voice party.")
     async def connect(ctx: discord.context.ApplicationContext):
         if bot._is_ready is False:
-            await ctx.respond("Ahem, seems even the finest quills falter. 🛑 No connection, no tale. Try again, my dear adventurer shortly.”", ephemeral=True)
+            await ctx.respond("No connection, Try again shortly.", ephemeral=True)
             return
         author_vc = ctx.author.voice
         if not author_vc:
-            await ctx.respond("I'm sorry adventurer, but it appears your voice has not joined a party.", ephemeral=True)
+            await ctx.respond("You have not joined a party.", ephemeral=True)
             return
         # check if we are already connected to a voice channel
         if bot.guild_to_helper.get(ctx.guild_id, None):
-            await ctx.respond("I'm sorry adventurer, but it appears I'm already in a party. 🤺", ephemeral=True)
+            await ctx.respond("I'm already in a party", ephemeral=True)
             return
         await ctx.trigger_typing()
         try:
@@ -113,12 +113,12 @@ if __name__ == "__main__":
             helper.guild_id = guild_id
             helper.set_vc(vc)
             bot.guild_to_helper[guild_id] = helper
-            await ctx.respond(f"Ah, splendid! The lore shall now flow as freely as the finest ale. 🍺 Prepare to immortalize brilliance!", ephemeral=False)
+            await ctx.respond(f"success", ephemeral=False)
             await ctx.guild.change_voice_state(channel=author_vc.channel, self_mute=True)
         except Exception as e:
             await ctx.respond(f"{e}", ephemeral=True)
 
-    @bot.slash_command(name="scribe", description="Ink the Saga of this adventure.")
+    @bot.slash_command(name="scribe", description="Start listening.")
     async def ink(ctx: discord.context.ApplicationContext):
         await ctx.trigger_typing()
         connect_command = next((cmd for cmd in ctx.bot.application_commands if cmd.name == "connect"), None)
@@ -131,27 +131,27 @@ if __name__ == "__main__":
             return
         # check if we are already scribing
         if bot.guild_is_recording.get(ctx.guild_id, False):
-            await ctx.respond("I'm sorry my liege, I can only write so fast.. 😥 ✒️", ephemeral=True)
+            await ctx.respond("I'm already listening", ephemeral=True)
             return
         bot.start_recording(ctx)
-        await ctx.respond("Your words are now inscribed in the annals of history! ✍️ Fear not, for V.O.L.O leaves nothing unwritten", ephemeral=False)
+        await ctx.respond("Begun listening", ephemeral=False)
     
-    @bot.slash_command(name="stop", description="Close the Tome on this adventure.")
+    @bot.slash_command(name="stop", description="Stop listening")
     async def stop(ctx: discord.context.ApplicationContext):
         guild_id = ctx.guild_id
         helper = bot.guild_to_helper.get(guild_id, None)
         if not helper:
-            await ctx.respond("Well, that's akward. I dont seem to be in your party.", ephemeral=True)
+            await ctx.respond("I dont seem to be in your party.", ephemeral=True)
             return
 
         bot_vc = helper.vc
         
         if not bot_vc:
-            await ctx.respond("Well, that's akward. I dont seem to be in your party.", ephemeral=True)
+            await ctx.respond("I dont seem to be in your party.", ephemeral=True)
             return
 
         if not bot.guild_is_recording.get(guild_id, False):
-            await ctx.respond("Well, that’s awkward. 😐 Was I suppose to be writing?", ephemeral=True)
+            await ctx.respond("Listening was not started", ephemeral=True)
             return
 
         await ctx.trigger_typing()
@@ -160,16 +160,16 @@ if __name__ == "__main__":
             await bot.get_transcription(ctx)
             bot.stop_recording(ctx)
             bot.guild_is_recording[guild_id] = False
-            await ctx.respond("The quill rests. 🖋️ A pause, but not the end. Awaiting your next grand tale, of course!", ephemeral=False)
+            await ctx.respond("Stopped listening", ephemeral=False)
             #await bot.get_transcription(ctx)
             bot.cleanup_sink(ctx)
         
-    @bot.slash_command(name="disconnect", description="VOLO leaves your party. Goodbye, friend.")
+    @bot.slash_command(name="disconnect", description="VOLO leaves your party")
     async def disconnect(ctx: discord.context.ApplicationContext):
         guild_id = ctx.guild_id
         id_exists = bot.guild_to_helper.get(guild_id, None)
         if not id_exists:
-            await ctx.respond("Well, that's akward. I dont seem to be in your party... Should I just go?", ephemeral=True)
+            await ctx.respond("I dont seem to be in your party", ephemeral=True)
             return
         
         helper = bot.guild_to_helper[guild_id]    
@@ -185,18 +185,18 @@ if __name__ == "__main__":
         helper.set_vc(None)
         bot.guild_to_helper.pop(guild_id, None)
 
-        await ctx.respond("The tome is sealed! 📖 Another chapter well-told, another adventure preserved. You have my gratitude!", ephemeral=False)
+        await ctx.respond("Disconnecting...", ephemeral=False)
 
     @bot.slash_command(name="generate_pdf", description="Generate a PDF of the transcriptions.")
     async def generate_pdf(ctx: discord.context.ApplicationContext):
         guild_id = ctx.guild_id
         helper = bot.guild_to_helper.get(guild_id, None)
         if not helper:
-            await ctx.respond("Well, that's akward. I dont seem to be in your party.", ephemeral=True)
+            await ctx.respond("I dont seem to be in your party.", ephemeral=True)
             return
         transcription = await bot.get_transcription(ctx)
         if not transcription:
-            await ctx.respond("I'm sorry, but it appears I have no transcriptions to write into the tome.", ephemeral=True)
+            await ctx.respond("I'm not listening", ephemeral=True)
             return
         pdf_file_path = await pdf_generator(transcription)
         # Send the PDF as an attachment
