@@ -62,7 +62,7 @@ if DEVICE == "cuda":
 audio_model = WhisperModel(WHISPER_MODEL, device=DEVICE, compute_type=WHISPER__PRECISION)
 
 load_dotenv()
-GENERAL_CHAT = os.getenv("DISCORD_CHANNEL_ID")
+GENERAL_CHAT_ID = os.getenv("DISCORD_CHANNEL_ID")
 GUILD_ID=int(os.getenv("GUILD_ID"))
 SHUTUP_ROLE_ID=int(os.getenv("SHUTUP_ROLE_ID"))
 os.environ["PATH"] += os.pathsep + os.path.join("ffmpeg", "ffmpeg.exe")
@@ -349,10 +349,9 @@ class WhisperSink(Sink):
                             #     "chase":"595483398882066434"
                             # }
                             
-
+                            generalChat=self.vc.guild.get_channel(int(GENERAL_CHAT_ID))
                             if "test" in text:
                                 idx = text.index("test") + len("test")
-                                generalChat=self.vc.guild.get_channel(int(GENERAL_CHAT))
                                 temp="<@"+str(speaker.user)+">: "+transcription
                                 future=asyncio.run_coroutine_threadsafe(generalChat.send(temp), self.loop)
                                 future=future.result()     
