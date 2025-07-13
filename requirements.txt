@@ -18,7 +18,8 @@ black
 pylint
 
 # OpenAI and speech recognition
-openai
+openaio
+iohttp
 faster_whisper
 SpeechRecognition
 

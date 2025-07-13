@@ -12,6 +12,8 @@ from typing import List
 import discord
 from dotenv import load_dotenv
 import os
+import aiohttp
+import src.sinks.chatgpt as chatgpt
 
 #tts
 try:
@@ -127,8 +129,8 @@ class WhisperSink(Sink):
         self.executor = ThreadPoolExecutor(max_workers=8)  # TODO: Adjust this
         self.player_map = player_map
         self.bot=bot
-        self.guild=bot.get_guild(GUILD_ID)
         self.members=""
+        self.guild=""
 
     def start_voice_thread(self, on_exception=None):
         def thread_exception_hook(args):
@@ -308,6 +310,9 @@ class WhisperSink(Sink):
                     try:
                         transcription = future.result()
                         try: 
+                            
+                            if self.guild=="":
+                                self.guild=asyncio.run_coroutine_threadsafe(self.bot.fetch_guild(GUILD_ID),self.loop).result()
                             if self.members=="":
                                 async def fetch_all_members(guild):
                                     return [member async for member in guild.fetch_members(limit=None)]
@@ -407,7 +412,9 @@ class WhisperSink(Sink):
                             
 
                             if "hey, bot" in text or "hey bot" in text:
-                                tts=gTTS(text="Hey, whats up "+str(speaker.player),lang="en")
+                                response = asyncio.run_coroutine_threadsafe(chatgpt.get_chatgpt_response(text),self.loop).result()
+                                #tts=gTTS(text="Hey, whats up "+str(speaker.player),lang="en")
+                                tts=gTTS(text=response,lang="en")
                                 tts.save("tts.mp3")
                                 future=asyncio.run_coroutine_threadsafe(self.guild.change_voice_state(channel=self.vc.channel, self_mute=False),self.loop)
                                 temp=future.result()
