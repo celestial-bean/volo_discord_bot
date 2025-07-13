@@ -44,7 +44,6 @@ class VoloBot(discord.Bot):
 
     async def close_consumers(self):
         await self.consumer_manager.close()
-
     def _close_and_clean_sink_for_guild(self, guild_id: int):
         whisper_sink: WhisperSink | None = self.guild_whisper_sinks.get(
             guild_id, None)

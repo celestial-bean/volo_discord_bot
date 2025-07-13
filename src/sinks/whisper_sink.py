@@ -12,6 +12,7 @@ from typing import List
 import discord
 from dotenv import load_dotenv
 import os 
+from yt_dlp import YoutubeDL
 
 import speech_recognition as sr
 import torch
@@ -38,7 +39,7 @@ audio_model = WhisperModel(WHISPER_MODEL, device=DEVICE, compute_type=WHISPER__P
 
 load_dotenv()
 GENERAL_CHAT = os.getenv("DISCORD_CHANNEL_ID")
-
+GUILD_ID=os.getenv("GUILD_ID")
 class Speaker:
     """
     A class to store the audio data and transcription for each user.
@@ -177,7 +178,7 @@ class WhisperSink(Sink):
                 for segment in segments:
                     result += segment.text
 
-                logger.info(f"Transcription: {result}")
+                #logger.info(f"Transcription: {result}")
                 return result
         except Exception as e:
             logger.error(f"Error transcribing audio: {e}")
@@ -234,7 +235,7 @@ class WhisperSink(Sink):
             transcriptions.append(formatted_entry)
 
         return transcriptions
-    
+
     def insert_voice(self):
         while self.running:
             try:
@@ -280,7 +281,16 @@ class WhisperSink(Sink):
                     try:
                         transcription = future.result()
                         text=transcription.lower().strip()
-
+                        
+                        async def delayRemoveRole(role_id, delay):
+                            await asyncio.sleep(delay)
+                            await member.remove_roles(role_id)
+                            print(f"Removed {role.name} from {member.display_name}")
+                        def convertName(arg):
+                            for i in nameDictionary.keys():
+                                if i in arg.lower():
+                                    return nameDictionary[i]
+                                
                         nameDictionary={
                             "ryan":"773550459687403541",
                             "noah":"1393044419661402183",
@@ -297,23 +307,26 @@ class WhisperSink(Sink):
                             "logan":"567809027506044942",
                             "kiwi":"671111921537122333",
                             "coast":"671111921537122333",
-
-
                         }
-                        async def delayRemoveRole(role_id, delay):
-                            await asyncio.sleep(delay)
-                            await member.remove_roles(role_id)
-                            print(f"Removed {role.name} from {member.display_name}")
-
-                        def convertName(arg):
-                            for i in nameDictionary.keys():
-                                if i in arg.lower():
-                                    return nameDictionary[i]
-                                
+                        bot=discord.Bot(self.bot)
                         if "test" in text:
                             idx = text.index("test") + len("test")
                             generalChat=self.vc.guild.get_channel(int(GENERAL_CHAT))
                             asyncio.run_coroutine_threadsafe(generalChat.send(transcription), self.loop)
+                                                        
+                        if "skippity toilet time" in text or "skibbity toilet time" in text:
+                            print("activating skibidi toilet")
+                            YDL_OPTIONS = {'format': 'bestaudio', 'noplaylist': 'True'}
+                            FFMPEG_OPTIONS = {'options': '-vn'}
+                            YOUTUBE_URL="https://www.youtube.com/watch?v=jnPKQV_ifYM"
+                            guild=bot.get_guild(GUILD_ID)
+                            guild.change_voice_state(channel=self.vc.channel, self_mute=False)
+                            with YoutubeDL(YDL_OPTIONS) as ydl:
+                                info = ydl.extract_info(YOUTUBE_URL, download=False)
+                                url = info['url']
+                                print(info)
+                            self.vc.play(discord.FFmpegPCMAudio(url, **FFMPEG_OPTIONS), after=lambda e: print("Playback finished", e))
+                            
 
                         if "shut up" in text:
                             idx = text.index("shut up") + len("shut up")
@@ -344,9 +357,6 @@ class WhisperSink(Sink):
                             user_id=str(speaker.user)
                             print(str(user_id)+" is omni-ing it")
                             asyncio.run_coroutine_threadsafe(generalChat.send("<@"+user_id+"> is Omni-ing it."), self.loop)
-
-                            #asyncio.run_coroutine_threadsafe(, self.loop)
-                            #asyncio.run_coroutine_threadsafe(channel.send("/shutup "+ "<@"+convertName(arg)+">"), self.loop)
 
                         current_time = time.time()
                         speaker_new_bytes = speaker.new_bytes
@@ -415,3 +425,5 @@ class WhisperSink(Sink):
         self.running = False
         self.queue.put_nowait(None)
         super().cleanup()
+
+    
