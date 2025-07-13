@@ -3,11 +3,10 @@ import json
 import logging
 import os
 from collections import defaultdict
-
+from src.sinks.whisper_sink import WhisperSink
 import discord
 import yaml
 
-from src.sinks.whisper_sink import WhisperSink
 
 DISCORD_CHANNEL_ID = int(os.getenv("DISCORD_CHANNEL_ID"))
 TRANSCRIPTION_METHOD = os.getenv("TRANSCRIPTION_METHOD")

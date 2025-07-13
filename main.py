@@ -127,7 +127,7 @@ if __name__ == "__main__":
         else:
             connect_text = f"</connect:{connect_command.id}>"
         if not bot.guild_to_helper.get(ctx.guild_id, None):
-            await ctx.respond(f"Well, that's akward. I dont seem to be in your party. How about I join? {connect_text}", ephemeral=True)
+            await ctx.respond(f"Well, that's. I dont seem to be in your party. How about I join? {connect_text}", ephemeral=True)
             return
         # check if we are already scribing
         if bot.guild_is_recording.get(ctx.guild_id, False):

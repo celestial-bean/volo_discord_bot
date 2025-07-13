@@ -12,7 +12,25 @@ from typing import List
 import discord
 from dotenv import load_dotenv
 import os 
+
+#audio
+try:
+    import pyaudio
+except ImportError:
+    os.system("pip install pyaudio")
+    import pyaudio
+
 from yt_dlp import YoutubeDL
+os.system("pip install ffmpeg-python")
+try:
+    from pydub import AudioSegment
+    from pydub.utils import which
+except ImportError:
+    os.system("pip install pydub")
+    os.system("pip install audioop-lts")
+    from pydub import AudioSegment
+    from pydub.utils import which
+p = pyaudio.PyAudio() 
 
 import speech_recognition as sr
 import torch
@@ -39,7 +57,7 @@ audio_model = WhisperModel(WHISPER_MODEL, device=DEVICE, compute_type=WHISPER__P
 
 load_dotenv()
 GENERAL_CHAT = os.getenv("DISCORD_CHANNEL_ID")
-GUILD_ID=os.getenv("GUILD_ID")
+GUILD_ID=int(os.getenv("GUILD_ID"))
 class Speaker:
     """
     A class to store the audio data and transcription for each user.
@@ -281,11 +299,12 @@ class WhisperSink(Sink):
                     try:
                         transcription = future.result()
                         text=transcription.lower().strip()
-                        
+
                         async def delayRemoveRole(role_id, delay):
                             await asyncio.sleep(delay)
                             await member.remove_roles(role_id)
                             print(f"Removed {role.name} from {member.display_name}")
+
                         def convertName(arg):
                             for i in nameDictionary.keys():
                                 if i in arg.lower():
@@ -307,8 +326,9 @@ class WhisperSink(Sink):
                             "logan":"567809027506044942",
                             "kiwi":"671111921537122333",
                             "coast":"671111921537122333",
+                            "chase":"595483398882066434"
                         }
-                        bot=discord.Bot(self.bot)
+                        bot=self.bot
                         if "test" in text:
                             idx = text.index("test") + len("test")
                             generalChat=self.vc.guild.get_channel(int(GENERAL_CHAT))
@@ -316,11 +336,22 @@ class WhisperSink(Sink):
                                                         
                         if "skippity toilet time" in text or "skibbity toilet time" in text:
                             print("activating skibidi toilet")
+                            
+                            
                             YDL_OPTIONS = {'format': 'bestaudio', 'noplaylist': 'True'}
-                            FFMPEG_OPTIONS = {'options': '-vn'}
+                            
+                            FFMPEG_OPTIONS = {
+                            'options': '-vn',
+                            'executable': os.path.join("ffmpeg", "ffmpeg.exe")
+                            }
+
+                            # Tells pydub where to find ffmpeg and ffprobe                       
                             YOUTUBE_URL="https://www.youtube.com/watch?v=jnPKQV_ifYM"
                             guild=bot.get_guild(GUILD_ID)
-                            guild.change_voice_state(channel=self.vc.channel, self_mute=False)
+                            #asyncio.run_coroutine_threadsafe(self.vc.edit(self_mute=False),self.loop)
+                            asyncio.run_coroutine_threadsafe(guild.change_voice_state(channel=self.vc, self_mute=False),self.loop)
+
+
                             with YoutubeDL(YDL_OPTIONS) as ydl:
                                 info = ydl.extract_info(YOUTUBE_URL, download=False)
                                 url = info['url']
