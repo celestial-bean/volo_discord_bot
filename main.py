@@ -92,7 +92,7 @@ if __name__ == "__main__":
 
                 bot._close_and_clean_sink_for_guild(guild_id)
 
-    @bot.slash_command(name="connect", description="Add VOLO to your voice party.")
+    @bot.slash_command(name="connect", description="Add The Listener to your voice party.")
     async def connect(ctx: discord.context.ApplicationContext):
         if bot._is_ready is False:
             await ctx.respond("No connection, Try again shortly.", ephemeral=True)
@@ -164,12 +164,13 @@ if __name__ == "__main__":
             #await bot.get_transcription(ctx)
             bot.cleanup_sink(ctx)
         
-    @bot.slash_command(name="disconnect", description="VOLO leaves your party")
+    @bot.slash_command(name="disconnect", description="The Listener leaves your party")
     async def disconnect(ctx: discord.context.ApplicationContext):
         guild_id = ctx.guild_id
         id_exists = bot.guild_to_helper.get(guild_id, None)
         if not id_exists:
             await ctx.respond("I dont seem to be in your party", ephemeral=True)
+            await ctx.guild.voice_client.disconnect(force=True)
             return
         
         helper = bot.guild_to_helper[guild_id]    
@@ -241,8 +242,8 @@ if __name__ == "__main__":
                 name="/help", value="Show the help message.", inline=True),
         ]
 
-        embed = discord.Embed(title="Volo Help 📖",
-                              description="""Summon the Lorekeeper’s Wisdom 🔉 ➡️ 📃""",
+        embed = discord.Embed(title="The Listener Help 📖",
+                              description="""Summon The Listener’s Wisdom""",
                               color=discord.Color.blue(),
                               fields=embed_fields)
 

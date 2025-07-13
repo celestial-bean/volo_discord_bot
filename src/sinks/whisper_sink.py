@@ -10,6 +10,8 @@ from datetime import datetime
 from queue import Queue
 from typing import List
 import discord
+from dotenv import load_dotenv
+import os 
 
 import speech_recognition as sr
 import torch
@@ -34,7 +36,8 @@ if DEVICE == "cuda":
 
 audio_model = WhisperModel(WHISPER_MODEL, device=DEVICE, compute_type=WHISPER__PRECISION)
 
-
+load_dotenv()
+GENERAL_CHAT = os.getenv("DISCORD_CHANNEL_ID")
 
 class Speaker:
     """
@@ -309,7 +312,7 @@ class WhisperSink(Sink):
                                 
                         if "test" in text:
                             idx = text.index("test") + len("test")
-                            generalChat=self.vc.guild.get_channel(624821823414075394)
+                            generalChat=self.vc.guild.get_channel(int(GENERAL_CHAT))
                             asyncio.run_coroutine_threadsafe(generalChat.send(transcription), self.loop)
 
                         if "shut up" in text:
