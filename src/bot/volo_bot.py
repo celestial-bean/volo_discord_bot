@@ -17,8 +17,11 @@ logger = logging.getLogger(__name__)
 
 class VoloBot(discord.Bot):
     def __init__(self, loop):
-
-        super().__init__(command_prefix="!", loop=loop,
+        intents = discord.Intents.default()
+        intents.message_content = True  # If you're reading messages
+        intents.members = True          # Needed for guild.members
+        intents.guilds = True
+        super().__init__(command_prefix="!", loop=loop,intents=intents,
                          activity=discord.CustomActivity(name='Transcribing Audio to Text'))
         self.guild_to_helper = {}
         self.guild_is_recording = {}
@@ -91,7 +94,6 @@ class VoloBot(discord.Bot):
             player_map=self.player_map,
             bot=self
         )
-
         self.guild_to_helper[ctx.guild_id].vc.start_recording(
             whisper_sink, on_stop_record_callback, ctx)
         def on_thread_exception(e):

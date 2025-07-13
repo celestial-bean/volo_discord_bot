@@ -26,7 +26,6 @@ try:
 except ImportError:
     os.system("pip install pyaudio")
     import pyaudio
-
 from yt_dlp import YoutubeDL
 os.system("pip install ffmpeg-python")
 try:
@@ -37,8 +36,8 @@ except ImportError:
     os.system("pip install audioop-lts")
     from pydub import AudioSegment
     from pydub.utils import which
-p = pyaudio.PyAudio() 
 
+#AI
 import speech_recognition as sr
 import torch
 from discord.sinks.core import Filters, Sink, default_filters
@@ -65,6 +64,9 @@ audio_model = WhisperModel(WHISPER_MODEL, device=DEVICE, compute_type=WHISPER__P
 load_dotenv()
 GENERAL_CHAT = os.getenv("DISCORD_CHANNEL_ID")
 GUILD_ID=int(os.getenv("GUILD_ID"))
+SHUTUP_ROLE_ID=int(os.getenv("SHUTUP_ROLE_ID"))
+os.environ["PATH"] += os.pathsep + os.path.join("ffmpeg", "ffmpeg.exe")
+
 class Speaker:
     """
     A class to store the audio data and transcription for each user.
@@ -125,6 +127,8 @@ class WhisperSink(Sink):
         self.executor = ThreadPoolExecutor(max_workers=8)  # TODO: Adjust this
         self.player_map = player_map
         self.bot=bot
+        self.guild=bot.get_guild(GUILD_ID)
+        self.members=""
 
     def start_voice_thread(self, on_exception=None):
         def thread_exception_hook(args):
@@ -284,8 +288,6 @@ class WhisperSink(Sink):
                         character = user_map.get("character")
                         self.speakers.append(Speaker(user_id, player, character, item[1], item[2]))
                     
-                    
-
 
                 # Transcribe audio for each speaker
                 # so this is interesting, as we arent checking the size of the audio stream, we are just transcribing it
@@ -305,100 +307,114 @@ class WhisperSink(Sink):
                     speaker = future_to_speaker[future]
                     try:
                         transcription = future.result()
-                        text=transcription.lower().strip()
+                        try: 
+                            if self.members=="":
+                                async def fetch_all_members(guild):
+                                    return [member async for member in guild.fetch_members(limit=None)]
 
-                        async def delayRemoveRole(role_id, delay):
-                            await asyncio.sleep(delay)
-                            await member.remove_roles(role_id)
-                            print(f"Removed {role.name} from {member.display_name}")
+                                self.members=asyncio.run_coroutine_threadsafe(fetch_all_members(self.guild),self.loop ).result()
 
-                        def convertName(arg):
-                            for i in nameDictionary.keys():
-                                if i in arg.lower():
-                                    return nameDictionary[i]
-                                
-                        nameDictionary={
-                            "ryan":"773550459687403541",
-                            "noah":"1393044419661402183",
-                            "hunter":"774864083110592533",
-                            "branson":"1214407016299241552",
-                            "nate":"864723222191407165",
-                            "nathen":"864723222191407165",
-                            "loic":"1124004427347533926",
-                            "grungy":"665652720681615373",
-                            "gauge":"665652720681615373",
-                            "adrian":"582709566811406356",
-                            "kazuto":"773550459687403541",
-                            "bryson":"1333270349596463155",
-                            "logan":"567809027506044942",
-                            "kiwi":"671111921537122333",
-                            "coast":"671111921537122333",
-                            "chase":"595483398882066434"
-                        }
-                        bot=self.bot
-                        if "test" in text:
-                            idx = text.index("test") + len("test")
-                            generalChat=self.vc.guild.get_channel(int(GENERAL_CHAT))
-                            temp="<@"+speaker.user+">: "+transcription
-                            asyncio.run_coroutine_threadsafe(generalChat.send(temp), self.loop)
-                                                        
-                        if "skippity toilet time" in text or "skibbity toilet time" in text:
-                            print("activating skibidi toilet")
-                            
+                            text=transcription.lower().strip()
+                            async def delayRemoveRole(role_id, delay):
+                                await asyncio.sleep(delay)
+                                await member.remove_roles(role_id)
+                                print(f"Removed {role.name} from {member.display_name}")
+
+                            def convertName(arg): #returns int user id
+                                for member in self.members:
+                                    if arg.lower() in member.player.lower():
+                                        return member.user
                             YDL_OPTIONS = {'format': 'bestaudio', 'noplaylist': 'True'}
-                            
                             FFMPEG_OPTIONS = {
-                            'options': '-vn',
-                            'executable': os.path.join("ffmpeg", "ffmpeg.exe")
-                            }
-
-                            # Tells pydub where to find ffmpeg and ffprobe                       
-                            YOUTUBE_URL="https://www.youtube.com/watch?v=jnPKQV_ifYM"
-                            guild=bot.get_guild(GUILD_ID)
-                            asyncio.run_coroutine_threadsafe(guild.change_voice_state(channel=self.vc, self_mute=False),self.loop)
-
-
-                            with YoutubeDL(YDL_OPTIONS) as ydl:
-                                info = ydl.extract_info(YOUTUBE_URL, download=False)
-                                url = info['url']
-                                print(info)
-                            self.vc.play(discord.FFmpegPCMAudio(url, **FFMPEG_OPTIONS), after=lambda e: print("Playback finished", e))
+                                'options': '-vn',
+                                'executable': os.path.join("ffmpeg", "ffmpeg.exe")
+                                }
+                            
+                            # nameDictionary={
+                            #     "ryan":"773550459687403541",
+                            #     "noah":"1393044419661402183",
+                            #     "hunter":"774864083110592533",
+                            #     "branson":"1214407016299241552",
+                            #     "nate":"864723222191407165",
+                            #     "nathen":"864723222191407165",
+                            #     "loic":"1124004427347533926",
+                            #     "grungy":"665652720681615373",
+                            #     "gauge":"665652720681615373",
+                            #     "adrian":"582709566811406356",
+                            #     "kazuto":"773550459687403541",
+                            #     "bryson":"1333270349596463155",
+                            #     "logan":"567809027506044942",
+                            #     "kiwi":"671111921537122333",
+                            #     "coast":"671111921537122333",
+                            #     "chase":"595483398882066434"
+                            # }
                             
 
-                        if "shut up" in text:
-                            idx = text.index("shut up") + len("shut up")
-                            arg = str(text[idx:]).split(" ")[1]
-                            print(arg)
-                            user_id=int(convertName(arg))
-                            future = asyncio.run_coroutine_threadsafe(self.bot.get_guild(624821823414075392).fetch_member(user_id), self.loop)
-                            member = future.result()
-                            role = discord.utils.get(member.guild.roles, name="Shut up")
-                            role= member.guild.get_role(1392632571153879060)
-                            if role is None:
-                                print("Role not found.")
-                            else:
-                                asyncio.run_coroutine_threadsafe(member.add_roles(role), self.loop)
-                                asyncio.run_coroutine_threadsafe(delayRemoveRole(role,300), self.loop)
-                                print(f"Added {role.name} to {member.display_name}")
+                            if "test" in text:
+                                idx = text.index("test") + len("test")
+                                generalChat=self.vc.guild.get_channel(int(GENERAL_CHAT))
+                                temp="<@"+str(speaker.user)+">: "+transcription
+                                future=asyncio.run_coroutine_threadsafe(generalChat.send(temp), self.loop)
+                                future=future.result()     
 
-                        if "what do you do with a soccer ball" in text:
-                            idx = text.index("what do you do with a soccer ball") + len("what do you do with a soccer ball")
-                            arg = str(text[idx:]).split(" ")[1]
-                            user_id=int(convertName(arg))
-                            future = asyncio.run_coroutine_threadsafe(self.bot.get_guild(624821823414075392).fetch_member(user_id), self.loop)
-                            member = future.result()
-                            asyncio.run_coroutine_threadsafe(member.move_to(None), self.loop)
-                          #"I'm omni-ing it"
-                        if "I'm omni-ing it" in text:
-                            print("I'm omni-ing it")
-                            idx = text.index("I'm omni-ing it") + len("I'm omni-ing it")
-                            user_id=str(speaker.user)
-                            print(str(user_id)+" is omni-ing it")
-                            asyncio.run_coroutine_threadsafe(generalChat.send("<@"+user_id+"> is Omni-ing it."), self.loop)
+                            if "i'm omni-ing it" in text:
+                                print("i'm omni-ing it")
+                                idx = text.index("i'm omni-ing it") + len("i'm omni-ing it")
+                                user_id=str(speaker.user)
+                                print(str(user_id)+" is omni-ing it")
+                                future=asyncio.run_coroutine_threadsafe(generalChat.send("<@"+user_id+"> is Omni-ing it."), self.loop)
+                                future=future.result()
 
-                        #if "hey bot" in text:
-                            #text to speech
+                            if "skippity toilet time" in text or "skibbity toilet time" in text:
+                                print("activating skibidi toilet")
+                                # Tells pydub where to find ffmpeg and ffprobe                       
+                                YOUTUBE_URL="https://www.youtube.com/watch?v=jnPKQV_ifYM"
+                                with YoutubeDL(YDL_OPTIONS) as ydl:
+                                    info = ydl.extract_info(YOUTUBE_URL, download=False)
+                                    url = info['url']
+                                    print(info)
+                                future=asyncio.run_coroutine_threadsafe(self.guild.change_voice_state(channel=self.vc.channel, self_mute=False),self.loop)
+                                future=future.result()
+                                self.vc.play(discord.FFmpegPCMAudio(url, **FFMPEG_OPTIONS), after=lambda e: print("Playback finished", e))
+                                
 
+                            if "shut up" in text:
+                                idx = text.index("shut up") + len("shut up")
+                                arg = str(text[idx:]).split(" ")[1]
+                                user_id=int(convertName(arg))
+                                future = asyncio.run_coroutine_threadsafe(self.guild.fetch_member(user_id), self.loop)
+                                member = future.result()
+                                role = discord.utils.get(member.guild.roles, name="Shut up")
+                                role= member.guild.get_role(SHUTUP_ROLE_ID)
+                                if role is None:
+                                    print("Role not found.")
+                                else:
+                                    future=asyncio.run_coroutine_threadsafe(member.add_roles(role), self.loop)
+                                    future=future.result()
+                                    asyncio.run_coroutine_threadsafe(delayRemoveRole(role,300), self.loop)# dont await
+                                    print(f"Added {role.name} to {member.display_name}")
+                                    
+                            if "what do you do with a soccer ball" in text:
+                                idx = text.index("what do you do with a soccer ball") + len("what do you do with a soccer ball")
+                                arg = str(text[idx:]).split(" ")[1]
+                                user_id=int(convertName(arg))
+                                future = asyncio.run_coroutine_threadsafe(self.guild.fetch_member(user_id), self.loop)
+                                member = future.result()
+                                future=asyncio.run_coroutine_threadsafe(member.move_to(None), self.loop)
+                                future=future.result()
+                                
+                            
+
+                            if "hey, bot" in text or "hey bot" in text:
+                                tts=gTTS(text="Hey, whats up "+str(speaker.player),lang="en")
+                                tts.save("tts.mp3")
+                                future=asyncio.run_coroutine_threadsafe(self.guild.change_voice_state(channel=self.vc.channel, self_mute=False),self.loop)
+                                temp=future.result()
+                                self.vc.play(discord.FFmpegPCMAudio(source="tts.mp3", **FFMPEG_OPTIONS), after=lambda e: print("Done playing"))
+                                
+
+                        except Exception as e:
+                            logger.error(f"Custom code error: {e}", exc_info=True)
 
 
                         current_time = time.time()
@@ -414,6 +430,7 @@ class WhisperSink(Sink):
 
             except Exception as e:
                 logger.error(f"Error in insert_voice: {e}")
+            
 
     def check_speaker_timeouts(self, current_speaker, transcription):
 

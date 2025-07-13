@@ -1,29 +1,37 @@
-#Discord Voice
+# Discord Voice
 py-cord[voice]
 
+# Async communication
 aio-pika
+
+# Configuration
 pyyaml
 
-# Envinroment file .env
+# Environment file support (.env)
 python-dotenv
 
-# Report Generators
+# Report generation
 reportlab
 
-# Lets keep our code clean
+# Code formatting and linting
 black
 pylint
 
-#openai and speech recognition
+# OpenAI and speech recognition
 openai
 faster_whisper
-speechrecognition
+SpeechRecognition
 
-# torch support of cuda 12
-#--extra-index-url https://download.pytorch.org/whl/cu121
-#torch
+# Text to Speech
+gTTS
 
-# torch cpu only support
---extra-index-url https://download.pytorch.org/whl/cpu
-torch 
+# Audio playback and manipulation
+pydub
+
+# YouTube audio downloader
+yt-dlp
+
+# Torch with CUDA 12 support
+--extra-index-url https://download.pytorch.org/whl/cu121
+torch
 
