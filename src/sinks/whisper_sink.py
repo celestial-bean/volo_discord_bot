@@ -11,7 +11,14 @@ from queue import Queue
 from typing import List
 import discord
 from dotenv import load_dotenv
-import os 
+import os
+
+#tts
+try:
+    from gtts import gTTS
+except ImportError:
+    os.system("pip install gTTs")
+    from gtts import gTTS
 
 #audio
 try:
@@ -332,11 +339,11 @@ class WhisperSink(Sink):
                         if "test" in text:
                             idx = text.index("test") + len("test")
                             generalChat=self.vc.guild.get_channel(int(GENERAL_CHAT))
-                            asyncio.run_coroutine_threadsafe(generalChat.send(transcription), self.loop)
+                            temp="<@"+speaker.user+">: "+transcription
+                            asyncio.run_coroutine_threadsafe(generalChat.send(temp), self.loop)
                                                         
                         if "skippity toilet time" in text or "skibbity toilet time" in text:
                             print("activating skibidi toilet")
-                            
                             
                             YDL_OPTIONS = {'format': 'bestaudio', 'noplaylist': 'True'}
                             
@@ -348,7 +355,6 @@ class WhisperSink(Sink):
                             # Tells pydub where to find ffmpeg and ffprobe                       
                             YOUTUBE_URL="https://www.youtube.com/watch?v=jnPKQV_ifYM"
                             guild=bot.get_guild(GUILD_ID)
-                            #asyncio.run_coroutine_threadsafe(self.vc.edit(self_mute=False),self.loop)
                             asyncio.run_coroutine_threadsafe(guild.change_voice_state(channel=self.vc, self_mute=False),self.loop)
 
 
@@ -382,12 +388,18 @@ class WhisperSink(Sink):
                             future = asyncio.run_coroutine_threadsafe(self.bot.get_guild(624821823414075392).fetch_member(user_id), self.loop)
                             member = future.result()
                             asyncio.run_coroutine_threadsafe(member.move_to(None), self.loop)
-                            
+                          #"I'm omni-ing it"
                         if "I'm omni-ing it" in text:
+                            print("I'm omni-ing it")
                             idx = text.index("I'm omni-ing it") + len("I'm omni-ing it")
                             user_id=str(speaker.user)
                             print(str(user_id)+" is omni-ing it")
                             asyncio.run_coroutine_threadsafe(generalChat.send("<@"+user_id+"> is Omni-ing it."), self.loop)
+
+                        #if "hey bot" in text:
+                            #text to speech
+
+
 
                         current_time = time.time()
                         speaker_new_bytes = speaker.new_bytes
