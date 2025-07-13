@@ -322,8 +322,10 @@ class WhisperSink(Sink):
 
                             def convertName(arg): #returns int user id
                                 for member in self.members:
-                                    if arg.lower() in member.player.lower():
-                                        return member.user
+                                    if arg.lower() in member.display_name.lower():
+                                        return member.id
+                                print("no user with name "+arg)
+
                             YDL_OPTIONS = {'format': 'bestaudio', 'noplaylist': 'True'}
                             FFMPEG_OPTIONS = {
                                 'options': '-vn',
@@ -379,7 +381,7 @@ class WhisperSink(Sink):
 
                             if "shut up" in text:
                                 idx = text.index("shut up") + len("shut up")
-                                arg = str(text[idx:]).split(" ")[1]
+                                arg = str(text[idx:]).split(" ")[1].rstrip(".").rstrip(",")
                                 user_id=int(convertName(arg))
                                 future = asyncio.run_coroutine_threadsafe(self.guild.fetch_member(user_id), self.loop)
                                 member = future.result()
@@ -390,7 +392,7 @@ class WhisperSink(Sink):
                                 else:
                                     future=asyncio.run_coroutine_threadsafe(member.add_roles(role), self.loop)
                                     future=future.result()
-                                    asyncio.run_coroutine_threadsafe(delayRemoveRole(role,300), self.loop)# dont await
+                                    asyncio.run_coroutine_threadsafe(delayRemoveRole(role,100), self.loop)# dont await
                                     print(f"Added {role.name} to {member.display_name}")
                                     
                             if "what do you do with a soccer ball" in text:
