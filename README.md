@@ -56,6 +56,8 @@ To set up and run this Discord bot, follow these steps:
    DISCORD_CHANNEL_ID= logging channel id
    SHUTUP_ROLE_ID= role id for the shutup command
    OPENAI_API_KEY= openAI api key
+   ADMIN_ROLE_ID= id of admin role
+   TIMEOUT_VC_ID= id of timeout voice channel
    ```
 
 ### Configuration

@@ -65,6 +65,9 @@ load_dotenv()
 GENERAL_CHAT_ID = os.getenv("DISCORD_CHANNEL_ID")
 GUILD_ID=int(os.getenv("GUILD_ID"))
 SHUTUP_ROLE_ID=int(os.getenv("SHUTUP_ROLE_ID"))
+ADMIN_ROLE_ID=int(os.getenv("ADMIN_ROLE_ID"))
+TIMEOUT_VC_ID=int(os.getenv("TIMEOUT_VC_ID"))
+
 os.environ["PATH"] += os.pathsep + os.path.join("ffmpeg", "ffmpeg.exe")
 
 class Speaker:
@@ -328,6 +331,8 @@ class WhisperSink(Sink):
                                 for member in self.members:
                                     if arg.lower() in member.display_name.lower():
                                         return member.id
+                                    if arg in nameDictionary.keys():
+                                        return nameDictionary[arg]
                                 print("no user with name "+arg)
 
                             YDL_OPTIONS = {'format': 'bestaudio', 'noplaylist': 'True'}
@@ -336,24 +341,24 @@ class WhisperSink(Sink):
                                 'executable': os.path.join("ffmpeg", "ffmpeg.exe")
                                 }
                             
-                            # nameDictionary={
-                            #     "ryan":"773550459687403541",
-                            #     "noah":"1393044419661402183",
-                            #     "hunter":"774864083110592533",
-                            #     "branson":"1214407016299241552",
-                            #     "nate":"864723222191407165",
-                            #     "nathen":"864723222191407165",
-                            #     "loic":"1124004427347533926",
-                            #     "grungy":"665652720681615373",
-                            #     "gauge":"665652720681615373",
-                            #     "adrian":"582709566811406356",
-                            #     "kazuto":"773550459687403541",
-                            #     "bryson":"1333270349596463155",
-                            #     "logan":"567809027506044942",
-                            #     "kiwi":"671111921537122333",
-                            #     "coast":"671111921537122333",
-                            #     "chase":"595483398882066434"
-                            # }
+                            nameDictionary={
+                                "ryan":"773550459687403541",
+                                "noah":"1393044419661402183",
+                                "hunter":"774864083110592533",
+                                "branson":"1214407016299241552",
+                                "nate":"864723222191407165",
+                                "nathen":"864723222191407165",
+                                "loic":"1124004427347533926",
+                                "grungy":"665652720681615373",
+                                "gauge":"665652720681615373",
+                                "adrian":"582709566811406356",
+                                "kazuto":"773550459687403541",
+                                "bryson":"1333270349596463155",
+                                "logan":"567809027506044942",
+                                "kiwi":"671111921537122333",
+                                "coast":"671111921537122333",
+                                "chase":"595483398882066434"
+                            }
                             
                             generalChat=self.vc.guild.get_channel(int(GENERAL_CHAT_ID))
                             if "test" in text:
@@ -406,9 +411,20 @@ class WhisperSink(Sink):
                                 if user_id!=self.bot.user.id:
                                     future = asyncio.run_coroutine_threadsafe(self.guild.fetch_member(user_id), self.loop)
                                     member = future.result()
-                                    future=asyncio.run_coroutine_threadsafe(member.move_to(None), self.loop)
-                                    future=future.result()
-                                
+                                    if not any(r.id == ADMIN_ROLE_ID for r in member.roles):
+                                        future=asyncio.run_coroutine_threadsafe(member.move_to(None), self.loop)
+                                        future=future.result()
+
+                            if "go sit in the corner" in text:
+                                idx = text.index("go sit in the corner") + len("go sit in the corner")
+                                arg = str(text[idx:]).split(" ")[1]
+                                user_id=int(convertName(arg))
+                                if user_id!=self.bot.user.id:
+                                    future = asyncio.run_coroutine_threadsafe(self.guild.fetch_member(user_id), self.loop)
+                                    member = future.result()
+                                    if not any(r.id == ADMIN_ROLE_ID for r in member.roles):
+                                        future=asyncio.run_coroutine_threadsafe(member.move_to(self.guild.get_channel(TIMEOUT_VC_ID)), self.loop)
+                                        future=future.result()
                             
 
                             if "hey, bot" in text or "hey bot" in text:
