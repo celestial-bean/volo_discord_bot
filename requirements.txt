@@ -27,7 +27,7 @@ gTTS
 
 # Audio playback and manipulation
 pydub
-
+ffmpeg-python
 # YouTube audio downloader
 yt-dlp
 

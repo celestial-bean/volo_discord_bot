@@ -12,6 +12,7 @@ from typing import List
 import discord
 from dotenv import load_dotenv
 import os
+import src.chatgpt as chatgpt
 
 #tts
 try:
@@ -27,7 +28,6 @@ except ImportError:
     os.system("pip install pyaudio")
     import pyaudio
 from yt_dlp import YoutubeDL
-os.system("pip install ffmpeg-python")
 try:
     from pydub import AudioSegment
     from pydub.utils import which
@@ -129,6 +129,7 @@ class WhisperSink(Sink):
         self.bot=bot
         self.guild=bot.get_guild(GUILD_ID)
         self.members=""
+        self.memory=[]
 
     def start_voice_thread(self, on_exception=None):
         def thread_exception_hook(args):
@@ -407,12 +408,18 @@ class WhisperSink(Sink):
                             
 
                             if "hey, bot" in text or "hey bot" in text:
-                                tts=gTTS(text="Hey, whats up "+str(speaker.player),lang="en")
+                                #tts=gTTS(text="Hey, whats up "+str(speaker.player),lang="en")
+                                prompt="history: "+";".join(self.memory)+"New message: "+ speaker.player+": "+ text
+                                print("Prompt: "+prompt)
+                                msg=asyncio.run_coroutine_threadsafe(chatgpt.get_chatgpt_response(prompt),self.loop).result()
+                                tts=gTTS(text=msg,lang="en",tld="ca")
                                 tts.save("tts.mp3")
                                 future=asyncio.run_coroutine_threadsafe(self.guild.change_voice_state(channel=self.vc.channel, self_mute=False),self.loop)
                                 temp=future.result()
                                 self.vc.play(discord.FFmpegPCMAudio(source="tts.mp3", **FFMPEG_OPTIONS), after=lambda e: print("Done playing"))
-                                
+
+                            self.memory.append(str(speaker.player)+text)
+                            self.memory=self.memory[-15:]
 
                         except Exception as e:
                             logger.error(f"Custom code error: {e}", exc_info=True)
