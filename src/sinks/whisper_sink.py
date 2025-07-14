@@ -322,7 +322,7 @@ class WhisperSink(Sink):
                                 self.members=asyncio.run_coroutine_threadsafe(fetch_all_members(self.guild),self.loop ).result()
 
                             text=transcription.lower().strip()
-                            print(str(speaker.player)+": "+text)
+                            print(str(speaker.player)+": "+text if text else "")
                             async def delayRemoveRole(role_id, delay):
                                 await asyncio.sleep(delay)
                                 await member.remove_roles(role_id)
@@ -451,9 +451,9 @@ class WhisperSink(Sink):
                                 future=asyncio.run_coroutine_threadsafe(self.guild.change_voice_state(channel=self.vc.channel, self_mute=False),self.loop)
                                 temp=future.result()
                                 self.vc.play(discord.FFmpegPCMAudio(source="tts.mp3", **FFMPEG_OPTIONS), after=lambda e: print("Done playing"))
-
-                            self.memory.append(str(speaker.player)+text)
-                            self.memory=self.memory[-15:]
+                            if text:
+                                self.memory.append(str(speaker.player)+": "+text)
+                                self.memory=self.memory[-20:]
 
                         except Exception as e:
                             logger.error(f"Custom code error: {e}", exc_info=True)
