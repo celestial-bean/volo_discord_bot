@@ -464,7 +464,7 @@ class WhisperSink(Sink):
                         # Remove speaker once returned. 
                         for s in self.speakers[:]:
                             if speaker.user == s.user:
-                                self.write_transcription_log(s, transcription)
+                              #  self.write_transcription_log(s, transcription)
                                 self.speakers.remove(s)
 
                     except Exception as e:
