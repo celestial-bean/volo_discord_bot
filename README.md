@@ -42,7 +42,7 @@ To set up and run this Discord bot, follow these steps:
 3. **Install Dependencies:**
 
    ```bash
-   pip install -r requirements.txt
+   pip install --user -r requirements.txt
    ```
 
 4. **Environment Variables:**
