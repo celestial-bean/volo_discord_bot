@@ -127,7 +127,6 @@ class WhisperSink(Sink):
         self.executor = ThreadPoolExecutor(max_workers=8)  # TODO: Adjust this
         self.player_map = player_map
         self.bot=bot
-        self.guild=bot.get_guild(GUILD_ID)
         self.members=""
         self.memory=[]
 
@@ -309,6 +308,9 @@ class WhisperSink(Sink):
                     try:
                         transcription = future.result()
                         try: 
+                            
+                            if self.guild=="":
+                                self.guild=asyncio.run_coroutine_threadsafe(self.bot.fetch_guild(GUILD_ID),self.loop).result()
                             if self.members=="":
                                 async def fetch_all_members(guild):
                                     return [member async for member in guild.fetch_members(limit=None)]
