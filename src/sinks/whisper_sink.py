@@ -322,6 +322,7 @@ class WhisperSink(Sink):
                                 self.members=asyncio.run_coroutine_threadsafe(fetch_all_members(self.guild),self.loop ).result()
 
                             text=transcription.lower().strip()
+                            print(str(speaker.player)+": "+text)
                             async def delayRemoveRole(role_id, delay):
                                 await asyncio.sleep(delay)
                                 await member.remove_roles(role_id)
@@ -478,7 +479,7 @@ class WhisperSink(Sink):
         # Copy the list to avoid modification during iteration
         for speaker in self.speakers[:]:
             if current_speaker.user == speaker.user:
-                self.write_transcription_log(speaker, transcription)
+                #self.write_transcription_log(speaker, transcription)
                 self.speakers.remove(speaker)
     
     def write_transcription_log(self, speaker, transcription):
