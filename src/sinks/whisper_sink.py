@@ -431,7 +431,8 @@ class WhisperSink(Sink):
                                         future = asyncio.run_coroutine_threadsafe(self.guild.fetch_member(user_id), self.loop)
                                         member = future.result()
                                         if not any(r.id == ADMIN_ROLE_ID for r in member.roles):
-                                            future=asyncio.run_coroutine_threadsafe(member.move_to(self.guild.get_channel(TIMEOUT_VC_ID)), self.loop).result()
+                                            channel=self.guild.get_channel(TIMEOUT_VC_ID)
+                                            future=asyncio.run_coroutine_threadsafe(member.move_to(channel), self.loop)
                                             future=future.result()
                                         else:
                                             print("Cannot timeout an admin")
