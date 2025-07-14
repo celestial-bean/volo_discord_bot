@@ -408,7 +408,7 @@ class WhisperSink(Sink):
                                         
                             if "what do you do with a soccer ball" in text:
                                 idx = text.index("what do you do with a soccer ball") + len("what do you do with a soccer ball")
-                                arg = str(text[idx:]).split(" ")[1]
+                                arg = str(text[idx:]).split(" ")[1].rstrip(".").rstrip(",")
                                 user_id=convertName(arg)
                                 if user_id:
                                     if user_id!=self.bot.user.id:
@@ -424,7 +424,7 @@ class WhisperSink(Sink):
 
                             if "go sit in the corner" in text:
                                 idx = text.index("go sit in the corner") + len("go sit in the corner")
-                                arg = str(text[idx:]).split(" ")[1]
+                                arg = str(text[idx:]).split(" ")[1].rstrip(".").rstrip(",")
                                 user_id=convertName(arg)
                                 if user_id:
                                     if user_id!=self.bot.user.id:
@@ -432,7 +432,6 @@ class WhisperSink(Sink):
                                         member = future.result()
                                         if not any(r.id == ADMIN_ROLE_ID for r in member.roles):
                                             future=asyncio.run_coroutine_threadsafe(member.move_to(self.guild.get_channel(TIMEOUT_VC_ID)), self.loop)
-                                            future=future.result()
                                             future=future.result()
                                         else:
                                             print("Cannot timeout an admin")
