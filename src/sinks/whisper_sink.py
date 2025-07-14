@@ -331,8 +331,8 @@ class WhisperSink(Sink):
                                 for member in self.members:
                                     if arg.lower() in member.display_name.lower():
                                         return member.id
-                                    if arg in nameDictionary.keys():
-                                        return int(nameDictionary[arg])
+                                if arg in nameDictionary.keys():
+                                    return int(nameDictionary[arg])
                                 print("no user with name "+arg)
                                 return None
 
