@@ -322,7 +322,9 @@ class WhisperSink(Sink):
                                 self.members=asyncio.run_coroutine_threadsafe(fetch_all_members(self.guild),self.loop ).result()
 
                             text=transcription.lower().strip()
-                            print(str(speaker.player)+": "+text if text else "")
+                            if text:
+                                print(str(speaker.player)+": "+text)
+                                
                             async def delayRemoveRole(role_id, delay):
                                 await asyncio.sleep(delay)
                                 await member.remove_roles(role_id)
