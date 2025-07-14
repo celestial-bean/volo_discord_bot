@@ -334,6 +334,7 @@ class WhisperSink(Sink):
                                     if arg in nameDictionary.keys():
                                         return nameDictionary[arg]
                                 print("no user with name "+arg)
+                                return None
 
                             YDL_OPTIONS = {'format': 'bestaudio', 'noplaylist': 'True'}
                             FFMPEG_OPTIONS = {
@@ -392,40 +393,52 @@ class WhisperSink(Sink):
                                 idx = text.index("shut up") + len("shut up")
                                 arg = str(text[idx:]).split(" ")[1].rstrip(".").rstrip(",")
                                 user_id=int(convertName(arg))
-                                future = asyncio.run_coroutine_threadsafe(self.guild.fetch_member(user_id), self.loop)
-                                member = future.result()
-                                role = discord.utils.get(member.guild.roles, name="Shut up")
-                                role= member.guild.get_role(SHUTUP_ROLE_ID)
-                                if role is None:
-                                    print("Role not found.")
-                                else:
-                                    future=asyncio.run_coroutine_threadsafe(member.add_roles(role), self.loop)
-                                    future=future.result()
-                                    asyncio.run_coroutine_threadsafe(delayRemoveRole(role,100), self.loop)# dont await
-                                    print(f"Added {role.name} to {member.display_name}")
-                                    
+                                if user_id:
+                                    future = asyncio.run_coroutine_threadsafe(self.guild.fetch_member(user_id), self.loop)
+                                    member = future.result()
+                                    role = discord.utils.get(member.guild.roles, name="Shut up")
+                                    role= member.guild.get_role(SHUTUP_ROLE_ID)
+                                    if role is None:
+                                        print("Role not found.")
+                                    else:
+                                        future=asyncio.run_coroutine_threadsafe(member.add_roles(role), self.loop)
+                                        future=future.result()
+                                        asyncio.run_coroutine_threadsafe(delayRemoveRole(role,100), self.loop)# dont await
+                                        print(f"Added {role.name} to {member.display_name}")
+                                        
                             if "what do you do with a soccer ball" in text:
                                 idx = text.index("what do you do with a soccer ball") + len("what do you do with a soccer ball")
                                 arg = str(text[idx:]).split(" ")[1]
                                 user_id=int(convertName(arg))
-                                if user_id!=self.bot.user.id:
-                                    future = asyncio.run_coroutine_threadsafe(self.guild.fetch_member(user_id), self.loop)
-                                    member = future.result()
-                                    if not any(r.id == ADMIN_ROLE_ID for r in member.roles):
-                                        future=asyncio.run_coroutine_threadsafe(member.move_to(None), self.loop)
-                                        future=future.result()
+                                if user_id:
+                                    if user_id!=self.bot.user.id:
+                                        future = asyncio.run_coroutine_threadsafe(self.guild.fetch_member(user_id), self.loop)
+                                        member = future.result()
+                                        if not any(r.id == ADMIN_ROLE_ID for r in member.roles):
+                                            future=asyncio.run_coroutine_threadsafe(member.move_to(None), self.loop)
+                                            future=future.result()
+                                        else:
+                                            print("Cannot kick an admin")
+                                    else:
+                                        print("Bot cannot kick itself")
 
                             if "go sit in the corner" in text:
                                 idx = text.index("go sit in the corner") + len("go sit in the corner")
                                 arg = str(text[idx:]).split(" ")[1]
                                 user_id=int(convertName(arg))
-                                if user_id!=self.bot.user.id:
-                                    future = asyncio.run_coroutine_threadsafe(self.guild.fetch_member(user_id), self.loop)
-                                    member = future.result()
-                                    if not any(r.id == ADMIN_ROLE_ID for r in member.roles):
-                                        future=asyncio.run_coroutine_threadsafe(member.move_to(self.guild.get_channel(TIMEOUT_VC_ID)), self.loop)
-                                        future=future.result()
-                            
+                                if user_id:
+                                    if user_id!=self.bot.user.id:
+                                        future = asyncio.run_coroutine_threadsafe(self.guild.fetch_member(user_id), self.loop)
+                                        member = future.result()
+                                        if not any(r.id == ADMIN_ROLE_ID for r in member.roles):
+                                            future=asyncio.run_coroutine_threadsafe(member.move_to(self.guild.get_channel(TIMEOUT_VC_ID)), self.loop)
+                                            future=future.result()
+                                            future=future.result()
+                                        else:
+                                            print("Cannot timeout an admin")
+                                    else:
+                                        print("Bot cannot timeout itself")
+                                
 
                             if "hey, bot" in text or "hey bot" in text:
                                 #tts=gTTS(text="Hey, whats up "+str(speaker.player),lang="en")
