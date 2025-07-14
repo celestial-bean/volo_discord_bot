@@ -50,10 +50,12 @@ To set up and run this Discord bot, follow these steps:
    Create a `.env` file in the root directory and add your Discord bot token and guild ID:
 
    ```
-   DISCORD_TOKEN=your_discord_bot_token
-   GUILD_ID=your_guild_id
-   PLAYER_MAP_FILE_PATH=path_to_player_map.yml
-   DISCORD_CHANNEL_ID=channel id
+   DISCORD_BOT_TOKEN= discord token
+   GUILD_ID= server id
+   PLAYER_MAP_FILE_PATH= player_map.yml
+   DISCORD_CHANNEL_ID= logging channel id
+   SHUTUP_ROLE_ID= role id for the shutup command
+   OPENAI_API_KEY= openAI api key
    ```
 
 ### Configuration
@@ -87,4 +89,5 @@ Contributions to this project are welcome. Please ensure to follow the project's
 ## Acknowledgments
 
 - This project uses [Whisper](https://github.com/openai/whisper) for audio transcription.
+- Cuda framwork for GPU acceleration
 - Thanks to the Discord.py community for their support and resources.
