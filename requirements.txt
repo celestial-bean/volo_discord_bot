@@ -1,5 +1,6 @@
 # Discord Voice
 py-cord[voice]
+Discord
 
 # Async communication
 aio-pika
@@ -29,6 +30,7 @@ gTTS
 # Audio playback and manipulation
 pydub
 ffmpeg-python
+pyaudio
 # YouTube audio downloader
 yt-dlp
 

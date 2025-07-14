@@ -403,10 +403,11 @@ class WhisperSink(Sink):
                                 idx = text.index("what do you do with a soccer ball") + len("what do you do with a soccer ball")
                                 arg = str(text[idx:]).split(" ")[1]
                                 user_id=int(convertName(arg))
-                                future = asyncio.run_coroutine_threadsafe(self.guild.fetch_member(user_id), self.loop)
-                                member = future.result()
-                                future=asyncio.run_coroutine_threadsafe(member.move_to(None), self.loop)
-                                future=future.result()
+                                if user_id!=self.bot.user.id:
+                                    future = asyncio.run_coroutine_threadsafe(self.guild.fetch_member(user_id), self.loop)
+                                    member = future.result()
+                                    future=asyncio.run_coroutine_threadsafe(member.move_to(None), self.loop)
+                                    future=future.result()
                                 
                             
 
