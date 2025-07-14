@@ -332,7 +332,7 @@ class WhisperSink(Sink):
                                     if arg.lower() in member.display_name.lower():
                                         return member.id
                                     if arg in nameDictionary.keys():
-                                        return nameDictionary[arg]
+                                        return int(nameDictionary[arg])
                                 print("no user with name "+arg)
                                 return None
 
@@ -392,7 +392,7 @@ class WhisperSink(Sink):
                             if "shut up" in text:
                                 idx = text.index("shut up") + len("shut up")
                                 arg = str(text[idx:]).split(" ")[1].rstrip(".").rstrip(",")
-                                user_id=int(convertName(arg))
+                                user_id=convertName(arg)
                                 if user_id:
                                     future = asyncio.run_coroutine_threadsafe(self.guild.fetch_member(user_id), self.loop)
                                     member = future.result()
@@ -409,7 +409,7 @@ class WhisperSink(Sink):
                             if "what do you do with a soccer ball" in text:
                                 idx = text.index("what do you do with a soccer ball") + len("what do you do with a soccer ball")
                                 arg = str(text[idx:]).split(" ")[1]
-                                user_id=int(convertName(arg))
+                                user_id=convertName(arg)
                                 if user_id:
                                     if user_id!=self.bot.user.id:
                                         future = asyncio.run_coroutine_threadsafe(self.guild.fetch_member(user_id), self.loop)
@@ -425,7 +425,7 @@ class WhisperSink(Sink):
                             if "go sit in the corner" in text:
                                 idx = text.index("go sit in the corner") + len("go sit in the corner")
                                 arg = str(text[idx:]).split(" ")[1]
-                                user_id=int(convertName(arg))
+                                user_id=convertName(arg)
                                 if user_id:
                                     if user_id!=self.bot.user.id:
                                         future = asyncio.run_coroutine_threadsafe(self.guild.fetch_member(user_id), self.loop)
