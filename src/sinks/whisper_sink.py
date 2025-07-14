@@ -129,7 +129,8 @@ class WhisperSink(Sink):
         self.bot=bot
         self.members=""
         self.memory=[]
-
+        self.guild=""
+        
     def start_voice_thread(self, on_exception=None):
         def thread_exception_hook(args):
             logger.debug(
