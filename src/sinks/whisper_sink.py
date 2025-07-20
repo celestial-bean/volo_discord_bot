@@ -448,7 +448,8 @@ class WhisperSink(Sink):
                                 prompt="history: "+";".join(self.memory)+"New message: "+ speaker.player+": "+ text
                                 print("Prompt: "+prompt)
                                 msg=asyncio.run_coroutine_threadsafe(chatgpt.get_chatgpt_response(prompt),self.loop).result()
-                                tts=gTTS(text=msg,lang="en",tld="ca")
+                                print(msg)
+                                tts=gTTS(text=msg,lang="en",tld="uk")
                                 tts.save("tts.mp3")
                                 future=asyncio.run_coroutine_threadsafe(self.guild.change_voice_state(channel=self.vc.channel, self_mute=False),self.loop)
                                 temp=future.result()

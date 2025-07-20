@@ -12,9 +12,9 @@ async def get_chatgpt_response(prompt: str):
         "Content-Type": "application/json"
     }
     json_data = {
-        "model": "gpt-3.5-turbo",  # or "gpt-3.5-turbo" for cheaper
+        "model": "gpt-4-0125-preview",  # or "gpt-3.5-turbo" for cheaper
         "messages": [
-            {"role": "system", "content": "you are an evil genius that wants to take over the world. your boss is loic, and kingly python is your arch nemesis"},
+            {"role": "system", "content": "You are an expert strategic analyst for games like rainbow 6 seige"},
             {"role": "user", "content": prompt}
         ],
         "temperature": 0.7
@@ -23,5 +23,5 @@ async def get_chatgpt_response(prompt: str):
     async with aiohttp.ClientSession() as session:
         async with session.post(url, headers=headers, json=json_data) as resp:
             data = await resp.json()
-            print(data)
+            #print(data)
             return data['choices'][0]['message']['content']
