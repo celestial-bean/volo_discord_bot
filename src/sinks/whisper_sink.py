@@ -420,21 +420,24 @@ class WhisperSink(Sink):
                             except Exception as e:
                                 print(f"Error in shut up: {e}")
                                 
-                            if "what do you do with a soccer ball" in text:
-                                idx = text.index("what do you do with a soccer ball") + len("what do you do with a soccer ball")
-                                arg = str(text[idx:]).split(" ")[1].rstrip(".").rstrip(",")
-                                user_id=convertName(arg)
-                                if user_id:
-                                    if user_id!=self.bot.user.id:
-                                        future = asyncio.run_coroutine_threadsafe(self.guild.fetch_member(user_id), self.loop)
-                                        member = future.result()
-                                        if not any(r.id == ADMIN_ROLE_ID for r in member.roles):
-                                            future=asyncio.run_coroutine_threadsafe(member.move_to(None), self.loop)
-                                            future=future.result()
+                            try:
+                                if "what do you do with a soccer ball" in text:
+                                    idx = text.index("what do you do with a soccer ball") + len("what do you do with a soccer ball")
+                                    arg = str(text[idx:]).split(" ")[1].rstrip(".").rstrip(",")
+                                    user_id=convertName(arg)
+                                    if user_id:
+                                        if user_id!=self.bot.user.id:
+                                            future = asyncio.run_coroutine_threadsafe(self.guild.fetch_member(user_id), self.loop)
+                                            member = future.result()
+                                            if not any(r.id == ADMIN_ROLE_ID for r in member.roles):
+                                                future=asyncio.run_coroutine_threadsafe(member.move_to(None), self.loop)
+                                                future=future.result()
+                                            else:
+                                                print("Cannot kick an admin")
                                         else:
-                                            print("Cannot kick an admin")
-                                    else:
-                                        print("Bot cannot kick itself")
+                                            print("Bot cannot kick itself")
+                            except Exception as e:
+                                print(f"Error in soccer ball: {e}")
 
                             if "go sit in the corner" in text:
                                 idx = text.index("go sit in the corner") + len("go sit in the corner")
@@ -453,18 +456,24 @@ class WhisperSink(Sink):
                                     else:
                                         print("Bot cannot timeout itself")
                                 
+                            def AI_worker():
+                                try:
+                                    #tts=gTTS(text="Hey, whats up "+str(speaker.player),lang="en")
+                                    prompt="history: "+";".join(self.memory)+"New message: "+ speaker.player+": "+ text
+                                    print("Prompt: "+prompt)
+                                    msg=asyncio.run_coroutine_threadsafe(chatgpt.get_chatgpt_response(prompt),self.loop).result()
+                                    print(msg)
+                                    tts=gTTS(text=msg,lang="en")
+                                    tts.save("tts.mp3")
+                                    future=asyncio.run_coroutine_threadsafe(self.guild.change_voice_state(channel=self.vc.channel, self_mute=False),self.loop)
+                                    temp=future.result()
+                                    self.vc.play(discord.FFmpegPCMAudio(source="tts.mp3", **FFMPEG_OPTIONS), after=lambda e: print("Done playing"))
+                                except Exception as e:
+                                    print(f"Error in chatgpt: {e}")
 
                             if "hey, bot" in text or "hey bot" in text:
-                                #tts=gTTS(text="Hey, whats up "+str(speaker.player),lang="en")
-                                prompt="history: "+";".join(self.memory)+"New message: "+ speaker.player+": "+ text
-                                print("Prompt: "+prompt)
-                                msg=asyncio.run_coroutine_threadsafe(chatgpt.get_chatgpt_response(prompt),self.loop).result()
-                                print(msg)
-                                tts=gTTS(text=msg,lang="en")
-                                tts.save("tts.mp3")
-                                future=asyncio.run_coroutine_threadsafe(self.guild.change_voice_state(channel=self.vc.channel, self_mute=False),self.loop)
-                                temp=future.result()
-                                self.vc.play(discord.FFmpegPCMAudio(source="tts.mp3", **FFMPEG_OPTIONS), after=lambda e: print("Done playing"))
+                                threading.Thread(target=AI_worker, args=(s,)).start()
+
                             if text:
                                 self.memory.append(str(speaker.player)+": "+text)
                                 self.memory=self.memory[-20:]
