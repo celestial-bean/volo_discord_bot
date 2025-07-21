@@ -456,7 +456,7 @@ class WhisperSink(Sink):
                                     else:
                                         print("Bot cannot timeout itself")
                                 
-                            def AI_worker():
+                            if "hey, bot" in text or "hey bot" in text:
                                 try:
                                     #tts=gTTS(text="Hey, whats up "+str(speaker.player),lang="en")
                                     prompt="history: "+";".join(self.memory)+"New message: "+ speaker.player+": "+ text
@@ -470,9 +470,6 @@ class WhisperSink(Sink):
                                     self.vc.play(discord.FFmpegPCMAudio(source="tts.mp3", **FFMPEG_OPTIONS), after=lambda e: print("Done playing"))
                                 except Exception as e:
                                     print(f"Error in chatgpt: {e}")
-
-                            if "hey, bot" in text or "hey bot" in text:
-                                threading.Thread(target=AI_worker, args=(s,)).start()
 
                             if text:
                                 self.memory.append(str(speaker.player)+": "+text)
