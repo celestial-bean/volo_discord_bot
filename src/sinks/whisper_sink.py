@@ -351,7 +351,7 @@ class WhisperSink(Sink):
                                 "hunter":"774864083110592533",
                                 "branson":"1214407016299241552",
                                 "nate":"864723222191407165",
-                                "nathen":"864723222191407165",
+                                "nathan":"864723222191407165",
                                 "loic":"1124004427347533926",
                                 "grungy":"665652720681615373",
                                 "gauge":"665652720681615373",
@@ -365,50 +365,61 @@ class WhisperSink(Sink):
                             }
                             
                             generalChat=self.vc.guild.get_channel(int(GENERAL_CHAT_ID))
-                            if "test" in text:
-                                idx = text.index("test") + len("test")
-                                temp="<@"+str(speaker.user)+">: "+transcription
-                                future=asyncio.run_coroutine_threadsafe(generalChat.send(temp), self.loop)
-                                future=future.result()     
+                            try:
+                                if "test" in text:
+                                    idx = text.index("test") + len("test")
+                                    temp="<@"+str(speaker.user)+">: "+transcription
+                                    future=asyncio.run_coroutine_threadsafe(generalChat.send(temp), self.loop)
+                                    future=future.result()     
+                            except Exception as e:
+                                print(f"Error in test: {e}" )
 
-                            if "i'm omni-ing it" in text:
-                                print("i'm omni-ing it")
-                                idx = text.index("i'm omni-ing it") + len("i'm omni-ing it")
-                                user_id=str(speaker.user)
-                                print(str(user_id)+" is omni-ing it")
-                                future=asyncio.run_coroutine_threadsafe(generalChat.send("<@"+user_id+"> is Omni-ing it."), self.loop)
-                                future=future.result()
-
-                            if "skippity toilet time" in text or "skibbity toilet time" in text:
-                                print("activating skibidi toilet")
-                                # Tells pydub where to find ffmpeg and ffprobe                       
-                                YOUTUBE_URL="https://www.youtube.com/watch?v=jnPKQV_ifYM"
-                                with YoutubeDL(YDL_OPTIONS) as ydl:
-                                    info = ydl.extract_info(YOUTUBE_URL, download=False)
-                                    url = info['url']
-                                    print(info)
-                                future=asyncio.run_coroutine_threadsafe(self.guild.change_voice_state(channel=self.vc.channel, self_mute=False),self.loop)
-                                future=future.result()
-                                self.vc.play(discord.FFmpegPCMAudio(url, **FFMPEG_OPTIONS), after=lambda e: print("Playback finished", e))
-                                
-
-                            if "shut up" in text:
-                                idx = text.index("shut up") + len("shut up")
-                                arg = str(text[idx:]).split(" ")[1].rstrip(".").rstrip(",")
-                                user_id=convertName(arg)
-                                if user_id:
-                                    future = asyncio.run_coroutine_threadsafe(self.guild.fetch_member(user_id), self.loop)
-                                    member = future.result()
-                                    role = discord.utils.get(member.guild.roles, name="Shut up")
-                                    role= member.guild.get_role(SHUTUP_ROLE_ID)
-                                    if role is None:
-                                        print("Role not found.")
-                                    else:
-                                        future=asyncio.run_coroutine_threadsafe(member.add_roles(role), self.loop)
+                                try:
+                                    if "i'm omni-ing it" in text:
+                                        print("i'm omni-ing it")
+                                        idx = text.index("i'm omni-ing it") + len("i'm omni-ing it")
+                                        user_id=str(speaker.user)
+                                        print(str(user_id)+" is omni-ing it")
+                                        future=asyncio.run_coroutine_threadsafe(generalChat.send("<@"+user_id+"> is Omni-ing it."), self.loop)
                                         future=future.result()
-                                        asyncio.run_coroutine_threadsafe(delayRemoveRole(role,100), self.loop)# dont await
-                                        print(f"Added {role.name} to {member.display_name}")
-                                        
+                                except Exception as e:
+                                    print(f"Error in omni-ing it: {e}")
+
+                            try:
+                                if "skippity toilet time" in text or "skibbity toilet time" in text or "skibbity-toilet time" in text:
+                                    print("activating skibidi toilet")
+                                    # Tells pydub where to find ffmpeg and ffprobe                       
+                                    YOUTUBE_URL="https://www.youtube.com/watch?v=jnPKQV_ifYM"
+                                    with YoutubeDL(YDL_OPTIONS) as ydl:
+                                        info = ydl.extract_info(YOUTUBE_URL, download=False)
+                                        url = info['url']
+                                        print(info)
+                                    future=asyncio.run_coroutine_threadsafe(self.guild.change_voice_state(channel=self.vc.channel, self_mute=False),self.loop)
+                                    future=future.result()
+                                    self.vc.play(discord.FFmpegPCMAudio(url, **FFMPEG_OPTIONS), after=lambda e: print("Playback finished", e))
+                            except Exception as e:
+                                print(f"Error in skibidi toilet: {e}")
+
+                            try:
+                                if "shut up" in text:
+                                    idx = text.index("shut up") + len("shut up")
+                                    arg = str(text[idx:]).split(" ")[1].rstrip(".").rstrip(",")
+                                    user_id=convertName(arg)
+                                    if user_id:
+                                        future = asyncio.run_coroutine_threadsafe(self.guild.fetch_member(user_id), self.loop)
+                                        member = future.result()
+                                        role = discord.utils.get(member.guild.roles, name="Shut up")
+                                        role= member.guild.get_role(SHUTUP_ROLE_ID)
+                                        if role is None:
+                                            print("Role not found.")
+                                        else:
+                                            future=asyncio.run_coroutine_threadsafe(member.add_roles(role), self.loop)
+                                            future=future.result()
+                                            asyncio.run_coroutine_threadsafe(delayRemoveRole(role,100), self.loop)# dont await
+                                            print(f"Added {role.name} to {member.display_name}")
+                            except Exception as e:
+                                print(f"Error in shut up: {e}")
+                                
                             if "what do you do with a soccer ball" in text:
                                 idx = text.index("what do you do with a soccer ball") + len("what do you do with a soccer ball")
                                 arg = str(text[idx:]).split(" ")[1].rstrip(".").rstrip(",")
@@ -449,7 +460,7 @@ class WhisperSink(Sink):
                                 print("Prompt: "+prompt)
                                 msg=asyncio.run_coroutine_threadsafe(chatgpt.get_chatgpt_response(prompt),self.loop).result()
                                 print(msg)
-                                tts=gTTS(text=msg,lang="en",tld="uk")
+                                tts=gTTS(text=msg,lang="en")
                                 tts.save("tts.mp3")
                                 future=asyncio.run_coroutine_threadsafe(self.guild.change_voice_state(channel=self.vc.channel, self_mute=False),self.loop)
                                 temp=future.result()

@@ -113,7 +113,7 @@ if __name__ == "__main__":
             helper.guild_id = guild_id
             helper.set_vc(vc)
             bot.guild_to_helper[guild_id] = helper
-            await ctx.respond(f"success", ephemeral=False)
+            await ctx.respond(f"success", ephemeral=True)
             await ctx.guild.change_voice_state(channel=author_vc.channel, self_mute=True)
         except Exception as e:
             await ctx.respond(f"{e}", ephemeral=True)
@@ -134,7 +134,7 @@ if __name__ == "__main__":
             await ctx.respond("I'm already listening", ephemeral=True)
             return
         bot.start_recording(ctx)
-        await ctx.respond("Begun listening", ephemeral=False)
+        await ctx.respond("Begun listening", ephemeral=True)
     
     @bot.slash_command(name="stop", description="Stop listening")
     async def stop(ctx: discord.context.ApplicationContext):
@@ -160,7 +160,7 @@ if __name__ == "__main__":
             await bot.get_transcription(ctx)
             bot.stop_recording(ctx)
             bot.guild_is_recording[guild_id] = False
-            await ctx.respond("Stopped listening", ephemeral=False)
+            await ctx.respond("Stopped listening", ephemeral=True)
             #await bot.get_transcription(ctx)
             bot.cleanup_sink(ctx)
         
@@ -186,7 +186,7 @@ if __name__ == "__main__":
         helper.set_vc(None)
         bot.guild_to_helper.pop(guild_id, None)
 
-        await ctx.respond("Disconnecting...", ephemeral=False)
+        await ctx.respond("Disconnecting...", ephemeral=True)
 
     @bot.slash_command(name="generate_pdf", description="Generate a PDF of the transcriptions.")
     async def generate_pdf(ctx: discord.context.ApplicationContext):
