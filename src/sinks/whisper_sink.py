@@ -477,7 +477,7 @@ class WhisperSink(Sink):
                             try:
                                 super_secret_code(self,text,speaker,generalChat)
                             except Exception as e:
-                                print(f"Error in secret code")
+                                print(f"Error in secret code: {e}")
 
                             if text:
                                 self.memory.append(str(speaker.player)+": "+text)
