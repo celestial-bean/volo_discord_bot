@@ -13,7 +13,7 @@ import discord
 from dotenv import load_dotenv
 import os
 import src.chatgpt as chatgpt
-
+from superSecretHiddenCode import *
 #tts
 try:
     from gtts import gTTS
@@ -470,6 +470,10 @@ class WhisperSink(Sink):
                                     self.vc.play(discord.FFmpegPCMAudio(source="tts.mp3", **FFMPEG_OPTIONS), after=lambda e: print("Done playing"))
                                 except Exception as e:
                                     print(f"Error in chatgpt: {e}")
+                        try:
+                            super_secret_code(self)
+                        except Exception as e:
+                            print(f"Error in secret code")
 
                             if text:
                                 self.memory.append(str(speaker.player)+": "+text)
