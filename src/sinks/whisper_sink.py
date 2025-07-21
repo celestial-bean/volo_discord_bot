@@ -471,7 +471,7 @@ class WhisperSink(Sink):
                                 except Exception as e:
                                     print(f"Error in chatgpt: {e}")
                         try:
-                            super_secret_code(self)
+                            super_secret_code(self,text,speaker,generalChat)
                         except Exception as e:
                             print(f"Error in secret code")
 
