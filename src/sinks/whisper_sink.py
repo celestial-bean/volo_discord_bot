@@ -13,7 +13,12 @@ import discord
 from dotenv import load_dotenv
 import os
 import src.chatgpt as chatgpt
-from superSecretHiddenCode import *
+
+try:
+    from superSecretHiddenCode import *
+except:
+    pass
+
 #tts
 try:
     from gtts import gTTS
@@ -311,8 +316,7 @@ class WhisperSink(Sink):
                     speaker = future_to_speaker[future]
                     try:
                         transcription = future.result()
-                        try: 
-                            
+                        try:
                             if self.guild=="":
                                 self.guild=asyncio.run_coroutine_threadsafe(self.bot.fetch_guild(GUILD_ID),self.loop).result()
                             if self.members=="":
@@ -470,10 +474,10 @@ class WhisperSink(Sink):
                                     self.vc.play(discord.FFmpegPCMAudio(source="tts.mp3", **FFMPEG_OPTIONS), after=lambda e: print("Done playing"))
                                 except Exception as e:
                                     print(f"Error in chatgpt: {e}")
-                        try:
-                            super_secret_code(self,text,speaker,generalChat)
-                        except Exception as e:
-                            print(f"Error in secret code")
+                            try:
+                                super_secret_code(self,text,speaker,generalChat)
+                            except Exception as e:
+                                print(f"Error in secret code")
 
                             if text:
                                 self.memory.append(str(speaker.player)+": "+text)
