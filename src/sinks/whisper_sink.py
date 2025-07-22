@@ -488,7 +488,6 @@ class WhisperSink(Sink):
                                     future=asyncio.run_coroutine_threadsafe(self.guild.change_voice_state(channel=self.vc.channel, self_mute=False),self.loop)
                                     future=future.result()
                                     self.vc.play(discord.FFmpegPCMAudio(url, **FFMPEG_OPTIONS), after=lambda e: print("Playback finished", e))
-                            
                             except Exception as e:
                                 print(f"Error in butt: {e}" )
 
