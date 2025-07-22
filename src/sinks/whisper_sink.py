@@ -67,12 +67,11 @@ if DEVICE == "cuda":
 audio_model = WhisperModel(WHISPER_MODEL, device=DEVICE, compute_type=WHISPER__PRECISION)
 
 load_dotenv()
-GENERAL_CHAT_ID = os.getenv("DISCORD_CHANNEL_ID")
+GENERAL_CHAT_ID = int(os.getenv("DISCORD_CHANNEL_ID"))
 GUILD_ID=int(os.getenv("GUILD_ID"))
 SHUTUP_ROLE_ID=int(os.getenv("SHUTUP_ROLE_ID"))
 ADMIN_ROLE_ID=int(os.getenv("ADMIN_ROLE_ID"))
 TIMEOUT_VC_ID=int(os.getenv("TIMEOUT_VC_ID"))
-
 os.environ["PATH"] += os.pathsep + os.path.join("ffmpeg", "ffmpeg.exe")
 
 class Speaker:
@@ -138,6 +137,7 @@ class WhisperSink(Sink):
         self.members=""
         self.memory=[]
         self.guild=""
+        self.generalChat=""
         
     def start_voice_thread(self, on_exception=None):
         def thread_exception_hook(args):
@@ -322,10 +322,11 @@ class WhisperSink(Sink):
                             if self.members=="":
                                 async def fetch_all_members(guild):
                                     return [member async for member in guild.fetch_members(limit=None)]
-
                                 self.members=asyncio.run_coroutine_threadsafe(fetch_all_members(self.guild),self.loop ).result()
+                            if self.generalChat=="":
+                                self.generalChat=asyncio.run_coroutine_threadsafe(self.guild.fetch_channel(GENERAL_CHAT_ID),self.loop).result()
 
-                            text=transcription.lower().strip()
+                            text=str(transcription.lower().strip())
                             if text:
                                 print(str(speaker.player)+": "+text)
                                 
@@ -367,13 +368,12 @@ class WhisperSink(Sink):
                                 "coast":"671111921537122333",
                                 "chase":"595483398882066434"
                             }
-                            
-                            generalChat=self.vc.guild.get_channel(int(GENERAL_CHAT_ID))
+
                             try:
                                 if "test" in text:
                                     idx = text.index("test") + len("test")
                                     temp="<@"+str(speaker.user)+">: "+transcription
-                                    future=asyncio.run_coroutine_threadsafe(generalChat.send(temp), self.loop)
+                                    future=asyncio.run_coroutine_threadsafe(self.generalChat.send(temp), self.loop)
                                     future=future.result()     
                             except Exception as e:
                                 print(f"Error in test: {e}" )
@@ -384,7 +384,7 @@ class WhisperSink(Sink):
                                         idx = text.index("i'm omni-ing it") + len("i'm omni-ing it")
                                         user_id=str(speaker.user)
                                         print(str(user_id)+" is omni-ing it")
-                                        future=asyncio.run_coroutine_threadsafe(generalChat.send("<@"+user_id+"> is Omni-ing it."), self.loop)
+                                        future=asyncio.run_coroutine_threadsafe(self.generalChat.send("<@"+user_id+"> is Omni-ing it."), self.loop)
                                         future=future.result()
                                 except Exception as e:
                                     print(f"Error in omni-ing it: {e}")
@@ -452,14 +452,22 @@ class WhisperSink(Sink):
                                         future = asyncio.run_coroutine_threadsafe(self.guild.fetch_member(user_id), self.loop)
                                         member = future.result()
                                         if not any(r.id == ADMIN_ROLE_ID for r in member.roles):
-                                            channel=self.guild.get_channel(TIMEOUT_VC_ID)
+                                            channel=asyncio.run_coroutine_threadsafe(self.guild.fetch_channel(TIMEOUT_VC_ID),self.loop).result()
                                             future=asyncio.run_coroutine_threadsafe(member.move_to(channel), self.loop)
                                             future=future.result()
                                         else:
                                             print("Cannot timeout an admin")
                                     else:
                                         print("Bot cannot timeout itself")
-                                
+
+                            if "cheese" in text:
+                                    i=text.count("cheese")
+                                    for i in range(i):
+                                        with open('dancing-rat.gif', 'rb') as file:
+                                            gif = discord.File(file)
+                                            asyncio.run_coroutine_threadsafe(self.generalChat.send("<@"+str(speaker.user)+">:",file=gif),self.loop).result()
+                                            
+
                             if "hey, bot" in text or "hey bot" in text:
                                 try:
                                     #tts=gTTS(text="Hey, whats up "+str(speaker.player),lang="en")
@@ -475,7 +483,7 @@ class WhisperSink(Sink):
                                 except Exception as e:
                                     print(f"Error in chatgpt: {e}")
                             try:
-                                super_secret_code(self,text,speaker,generalChat)
+                                super_secret_code(self,text,speaker,self.generalChat)
                             except Exception as e:
                                 print(f"Error in secret code: {e}")
 
