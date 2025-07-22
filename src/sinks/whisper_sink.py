@@ -68,7 +68,8 @@ if DEVICE == "cuda":
 audio_model = WhisperModel(WHISPER_MODEL, device=DEVICE, compute_type=WHISPER__PRECISION)
 
 load_dotenv()
-GENERAL_CHAT_ID = int(os.getenv("DISCORD_CHANNEL_ID"))
+GENERAL_CHAT_ID = int(os.getenv("GENERAL_CHAT_ID"))
+DISCORD_CHANNEL_ID = int(os.getenv("DISCORD_CHANNEL_ID"))
 GUILD_ID=int(os.getenv("GUILD_ID"))
 SHUTUP_ROLE_ID=int(os.getenv("SHUTUP_ROLE_ID"))
 ADMIN_ROLE_ID=int(os.getenv("ADMIN_ROLE_ID"))
@@ -141,6 +142,7 @@ class WhisperSink(Sink):
         self.memory=[]
         self.guild=""
         self.generalChat=""
+        self.listenerChannel=""
         
     def start_voice_thread(self, on_exception=None):
         def thread_exception_hook(args):
@@ -328,6 +330,8 @@ class WhisperSink(Sink):
                                 self.members=asyncio.run_coroutine_threadsafe(fetch_all_members(self.guild),self.loop ).result()
                             if self.generalChat=="":
                                 self.generalChat=asyncio.run_coroutine_threadsafe(self.guild.fetch_channel(GENERAL_CHAT_ID),self.loop).result()
+                            if self.listenerChannel=="":
+                                self.listenerChannel=asyncio.run_coroutine_threadsafe(self.guild.fetch_channel(DISCORD_CHANNEL_ID),self.loop).result()
 
                             text=str(transcription.lower().strip())
                             if text:
@@ -450,7 +454,7 @@ class WhisperSink(Sink):
                                     for i in range(i):
                                         with open('dancing-rat.gif', 'rb') as file:
                                             gif = discord.File(file)
-                                            asyncio.run_coroutine_threadsafe(self.generalChat.send("<@"+str(speaker.user)+">:",file=gif),self.loop).result()
+                                            asyncio.run_coroutine_threadsafe(self.listenerChannel.send("<@"+str(speaker.user)+">:",file=gif),self.loop).result()
                                             
 
                             if "hey, bot" in text or "hey bot" in text:
