@@ -490,6 +490,21 @@ class WhisperSink(Sink):
                                     self.vc.play(discord.FFmpegPCMAudio(url, **FFMPEG_OPTIONS), after=lambda e: print("Playback finished", e))
                             except Exception as e:
                                 print(f"Error in butt: {e}" )
+                            
+                            try:
+                                if "taco" in text:
+                                    print("activating nom nom nom")
+                                    # Tells pydub where to find ffmpeg and ffprobe                       
+                                    YOUTUBE_URL="https://www.youtube.com/watch?v=UaMKUVxidpM"
+                                    with YoutubeDL(YDL_OPTIONS) as ydl:
+                                        info = ydl.extract_info(YOUTUBE_URL, download=False)
+                                        url = info['url']
+                                        print(info)
+                                    future=asyncio.run_coroutine_threadsafe(self.guild.change_voice_state(channel=self.vc.channel, self_mute=False),self.loop)
+                                    future=future.result()
+                                    self.vc.play(discord.FFmpegPCMAudio(url, **FFMPEG_OPTIONS), after=lambda e: print("Playback finished", e))
+                            except Exception as e:
+                                print(f"Error in nom nom nom: {e}" )
 
                             if text:
                                 self.memory.append(str(speaker.player)+": "+text)
