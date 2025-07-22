@@ -219,7 +219,7 @@ if __name__ == "__main__":
             return
         try:
             await bot.update_player_map(ctx)
-            await ctx.respond("📜✨ Behold, the Tome of True Names is Updated ✨📜")
+            await ctx.respond("Player map has been updated.", ephemeral=True)
         except Exception as e:
             await ctx.respond(f"Unable to update player_map.yml.:\n{e}", ephemeral=True)
             raise e
