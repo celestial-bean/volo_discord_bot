@@ -8,3 +8,4 @@ player_map.yaml
 venv/
 .logs/
 superSecretHiddenCode.py
+nameDictionary.json

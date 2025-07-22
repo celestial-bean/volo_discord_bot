@@ -13,6 +13,7 @@ import discord
 from dotenv import load_dotenv
 import os
 import src.chatgpt as chatgpt
+import json
 
 try:
     from superSecretHiddenCode import *
@@ -73,7 +74,9 @@ SHUTUP_ROLE_ID=int(os.getenv("SHUTUP_ROLE_ID"))
 ADMIN_ROLE_ID=int(os.getenv("ADMIN_ROLE_ID"))
 TIMEOUT_VC_ID=int(os.getenv("TIMEOUT_VC_ID"))
 os.environ["PATH"] += os.pathsep + os.path.join("ffmpeg", "ffmpeg.exe")
-
+with open("nameDictionary.json","r") as f:
+    nameDictionary=json.loads(f.read())
+    
 class Speaker:
     """
     A class to store the audio data and transcription for each user.
@@ -350,25 +353,7 @@ class WhisperSink(Sink):
                                 'executable': os.path.join("ffmpeg", "ffmpeg.exe")
                                 }
                             
-                            nameDictionary={
-                                "ryan":"773550459687403541",
-                                "noah":"1393044419661402183",
-                                "hunter":"774864083110592533",
-                                "branson":"1214407016299241552",
-                                "nate":"864723222191407165",
-                                "nathan":"864723222191407165",
-                                "loic":"1124004427347533926",
-                                "grungy":"665652720681615373",
-                                "gauge":"665652720681615373",
-                                "adrian":"582709566811406356",
-                                "kazuto":"773550459687403541",
-                                "bryson":"1333270349596463155",
-                                "logan":"567809027506044942",
-                                "kiwi":"671111921537122333",
-                                "coast":"671111921537122333",
-                                "chase":"595483398882066434"
-                            }
-
+                            
                             try:
                                 if "test" in text:
                                     idx = text.index("test") + len("test")
