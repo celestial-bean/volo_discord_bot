@@ -362,7 +362,7 @@ class WhisperSink(Sink):
                                 if "test" in text:
                                     idx = text.index("test") + len("test")
                                     temp="<@"+str(speaker.user)+">: "+transcription
-                                    future=asyncio.run_coroutine_threadsafe(self.generalChat.send(temp), self.loop)
+                                    future=asyncio.run_coroutine_threadsafe(self.listenerChannel.send(temp), self.loop)
                                     future=future.result()     
                             except Exception as e:
                                 print(f"Error in test: {e}" )
@@ -373,7 +373,7 @@ class WhisperSink(Sink):
                                         idx = text.index("i'm omni-ing it") + len("i'm omni-ing it")
                                         user_id=str(speaker.user)
                                         print(str(user_id)+" is omni-ing it")
-                                        future=asyncio.run_coroutine_threadsafe(self.generalChat.send("<@"+user_id+"> is Omni-ing it."), self.loop)
+                                        future=asyncio.run_coroutine_threadsafe(self.listenerChannel.send("<@"+user_id+"> is Omni-ing it."), self.loop)
                                         future=future.result()
                                 except Exception as e:
                                     print(f"Error in omni-ing it: {e}")
@@ -475,6 +475,22 @@ class WhisperSink(Sink):
                                 super_secret_code(self,text,speaker,self.generalChat)
                             except Exception as e:
                                 print(f"Error in secret code: {e}")
+
+                            try:
+                                if "butt" in text:
+                                    print("activating skibidi toilet")
+                                    # Tells pydub where to find ffmpeg and ffprobe                       
+                                    YOUTUBE_URL="https://www.youtube.com/watch?v=QwtSnk84yZU"
+                                    with YoutubeDL(YDL_OPTIONS) as ydl:
+                                        info = ydl.extract_info(YOUTUBE_URL, download=False)
+                                        url = info['url']
+                                        print(info)
+                                    future=asyncio.run_coroutine_threadsafe(self.guild.change_voice_state(channel=self.vc.channel, self_mute=False),self.loop)
+                                    future=future.result()
+                                    self.vc.play(discord.FFmpegPCMAudio(url, **FFMPEG_OPTIONS), after=lambda e: print("Playback finished", e))
+                            
+                            except Exception as e:
+                                print(f"Error in butt: {e}" )
 
                             if text:
                                 self.memory.append(str(speaker.player)+": "+text)
