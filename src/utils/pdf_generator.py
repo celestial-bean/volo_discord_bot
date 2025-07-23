@@ -76,11 +76,13 @@ async def pdf_generator(transcriptions, logo_path=None):
             except json.JSONDecodeError:
                 continue
         begin = log_message.get("begin", "N/A")
-        user_id = log_message.get("user_id", "N/A")
+        #user_id = log_message.get("user_id", "N/A")
+        character = log_message.get("character", "N/A")
         data = log_message.get("data", "")
 
         # Wrap the text in the Data column
-        formatted_entry = f"{begin:<15} {user_id:<25} {data}"
+        formatted_entry = f"{begin:<15} {character:<25} {data}"
+        #formatted_entry = f"{begin:<15} {user_id:<25} {data}"
         elements.append(Paragraph(formatted_entry, content_style))
         elements.append(Spacer(1, 12))
 

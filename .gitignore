@@ -9,3 +9,4 @@ venv/
 .logs/
 superSecretHiddenCode.py
 nameDictionary.json
+cache/

@@ -34,6 +34,7 @@ except ImportError:
     os.system("pip install pyaudio")
     import pyaudio
 from yt_dlp import YoutubeDL
+import yt_dlp
 try:
     from pydub import AudioSegment
     from pydub.utils import which
@@ -77,7 +78,26 @@ TIMEOUT_VC_ID=int(os.getenv("TIMEOUT_VC_ID"))
 os.environ["PATH"] += os.pathsep + os.path.join("ffmpeg", "ffmpeg.exe")
 with open("nameDictionary.json","r") as f:
     nameDictionary=json.loads(f.read())
-    
+
+def download_youtube_audio(url, output_path, filename):
+    os.makedirs(output_path, exist_ok=True)
+
+    # Set the full output file path using your custom filename
+    full_output = os.path.join(output_path, filename + '.%(ext)s')
+
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'outtmpl': full_output,
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'mp3',
+            'preferredquality': '192',
+        }],
+    }
+
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        ydl.download([url])
+
 class Speaker:
     """
     A class to store the audio data and transcription for each user.
@@ -143,7 +163,16 @@ class WhisperSink(Sink):
         self.guild=""
         self.generalChat=""
         self.listenerChannel=""
-        
+
+    def convertName(self,arg,nameDictionary): #returns int user id
+                                for member in self.members:
+                                    if arg.lower() in member.display_name.lower():
+                                        return member.id
+                                if arg in nameDictionary.keys():
+                                    return int(nameDictionary[arg])
+                                print("no user with name "+arg)
+                                return None
+    
     def start_voice_thread(self, on_exception=None):
         def thread_exception_hook(args):
             logger.debug(
@@ -342,15 +371,8 @@ class WhisperSink(Sink):
                                 await member.remove_roles(role_id)
                                 print(f"Removed {role.name} from {member.display_name}")
 
-                            def convertName(arg): #returns int user id
-                                for member in self.members:
-                                    if arg.lower() in member.display_name.lower():
-                                        return member.id
-                                if arg in nameDictionary.keys():
-                                    return int(nameDictionary[arg])
-                                print("no user with name "+arg)
-                                return None
-
+                            
+                            
                             YDL_OPTIONS = {'format': 'bestaudio', 'noplaylist': 'True'}
                             FFMPEG_OPTIONS = {
                                 'options': '-vn',
@@ -383,13 +405,11 @@ class WhisperSink(Sink):
                                     print("activating skibidi toilet")
                                     # Tells pydub where to find ffmpeg and ffprobe                       
                                     YOUTUBE_URL="https://www.youtube.com/watch?v=jnPKQV_ifYM"
-                                    with YoutubeDL(YDL_OPTIONS) as ydl:
-                                        info = ydl.extract_info(YOUTUBE_URL, download=False)
-                                        url = info['url']
-                                        print(info)
+                                    if not os.path.exists("cache/toilet.mp3"):
+                                        download_youtube_audio(YOUTUBE_URL,"cache","toilet")
                                     future=asyncio.run_coroutine_threadsafe(self.guild.change_voice_state(channel=self.vc.channel, self_mute=False),self.loop)
                                     future=future.result()
-                                    self.vc.play(discord.FFmpegPCMAudio(url, **FFMPEG_OPTIONS), after=lambda e: print("Playback finished", e))
+                                    self.vc.play(discord.FFmpegPCMAudio("cache/toilet.mp3", **FFMPEG_OPTIONS), after=lambda e: print("Playback finished", e))
                             except Exception as e:
                                 print(f"Error in skibidi toilet: {e}")
 
@@ -397,7 +417,7 @@ class WhisperSink(Sink):
                                 if "shut up" in text:
                                     idx = text.index("shut up") + len("shut up")
                                     arg = str(text[idx:]).split(" ")[1].rstrip(".").rstrip(",")
-                                    user_id=convertName(arg)
+                                    user_id=self.convertName(arg,nameDictionary)
                                     if user_id:
                                         future = asyncio.run_coroutine_threadsafe(self.guild.fetch_member(user_id), self.loop)
                                         member = future.result()
@@ -417,7 +437,7 @@ class WhisperSink(Sink):
                                 if "what do you do with a soccer ball" in text:
                                     idx = text.index("what do you do with a soccer ball") + len("what do you do with a soccer ball")
                                     arg = str(text[idx:]).split(" ")[1].rstrip(".").rstrip(",")
-                                    user_id=convertName(arg)
+                                    user_id=self.convertName(arg,nameDictionary)
                                     if user_id:
                                         if user_id!=self.bot.user.id:
                                             future = asyncio.run_coroutine_threadsafe(self.guild.fetch_member(user_id), self.loop)
@@ -435,7 +455,7 @@ class WhisperSink(Sink):
                             if "go sit in the corner" in text:
                                 idx = text.index("go sit in the corner") + len("go sit in the corner")
                                 arg = str(text[idx:]).split(" ")[1].rstrip(".").rstrip(",")
-                                user_id=convertName(arg)
+                                user_id=self.convertName(arg,nameDictionary)
                                 if user_id:
                                     if user_id!=self.bot.user.id:
                                         future = asyncio.run_coroutine_threadsafe(self.guild.fetch_member(user_id), self.loop)
@@ -452,7 +472,7 @@ class WhisperSink(Sink):
                             if "cheese" in text:
                                     i=text.count("cheese")
                                     for i in range(i):
-                                        with open('dancing-rat.gif', 'rb') as file:
+                                        with open('assets/dancing-rat.gif', 'rb') as file:
                                             gif = discord.File(file)
                                             asyncio.run_coroutine_threadsafe(self.listenerChannel.send("<@"+str(speaker.user)+">:",file=gif),self.loop).result()
                                             
@@ -478,16 +498,14 @@ class WhisperSink(Sink):
 
                             try:
                                 if "butt" in text:
-                                    print("activating skibidi toilet")
+                                    print("activating diggin in yo butt")
                                     # Tells pydub where to find ffmpeg and ffprobe                       
                                     YOUTUBE_URL="https://www.youtube.com/watch?v=QwtSnk84yZU"
-                                    with YoutubeDL(YDL_OPTIONS) as ydl:
-                                        info = ydl.extract_info(YOUTUBE_URL, download=False)
-                                        url = info['url']
-                                        print(info)
+                                    if not os.path.exists("cache/diggin.mp3"):
+                                        download_youtube_audio(YOUTUBE_URL,"cache","diggin")
                                     future=asyncio.run_coroutine_threadsafe(self.guild.change_voice_state(channel=self.vc.channel, self_mute=False),self.loop)
                                     future=future.result()
-                                    self.vc.play(discord.FFmpegPCMAudio(url, **FFMPEG_OPTIONS), after=lambda e: print("Playback finished", e))
+                                    self.vc.play(discord.FFmpegPCMAudio("cache/diggin.mp3", **FFMPEG_OPTIONS), after=lambda e: print("Playback finished", e))
                             except Exception as e:
                                 print(f"Error in butt: {e}" )
                             
@@ -496,13 +514,11 @@ class WhisperSink(Sink):
                                     print("activating nom nom nom")
                                     # Tells pydub where to find ffmpeg and ffprobe                       
                                     YOUTUBE_URL="https://www.youtube.com/watch?v=UaMKUVxidpM"
-                                    with YoutubeDL(YDL_OPTIONS) as ydl:
-                                        info = ydl.extract_info(YOUTUBE_URL, download=False)
-                                        url = info['url']
-                                        print(info)
+                                    if not os.path.exists("cache/taco.mp3"):
+                                        download_youtube_audio(YOUTUBE_URL,"cache","taco")
                                     future=asyncio.run_coroutine_threadsafe(self.guild.change_voice_state(channel=self.vc.channel, self_mute=False),self.loop)
                                     future=future.result()
-                                    self.vc.play(discord.FFmpegPCMAudio(url, **FFMPEG_OPTIONS), after=lambda e: print("Playback finished", e))
+                                    self.vc.play(discord.FFmpegPCMAudio("cache/taco.mp3", **FFMPEG_OPTIONS), after=lambda e: print("Playback finished", e))
                             except Exception as e:
                                 print(f"Error in nom nom nom: {e}" )
 
@@ -519,7 +535,7 @@ class WhisperSink(Sink):
                         # Remove speaker once returned. 
                         for s in self.speakers[:]:
                             if speaker.user == s.user:
-                              #  self.write_transcription_log(s, transcription)
+                                self.write_transcription_log(s, transcription)
                                 self.speakers.remove(s)
 
                     except Exception as e:
@@ -559,7 +575,7 @@ class WhisperSink(Sink):
         # Get the transcription logger
         transcription_logger = logging.getLogger('transcription')
         # Log the message
-        transcription_logger.info(log_message)
+        #transcription_logger.info(log_message)
         # Place into queue for processing
         self.transcription_output_queue.put_nowait(log_message)
     
