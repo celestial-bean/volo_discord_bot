@@ -525,7 +525,6 @@ class WhisperSink(Sink):
                             if text:
                                 self.memory.append(str(speaker.player)+": "+text)
                                 self.memory=self.memory[-20:]
-
                         except Exception as e:
                             logger.error(f"Custom code error: {e}", exc_info=True)
 
