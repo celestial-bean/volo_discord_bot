@@ -14,7 +14,7 @@ async def get_chatgpt_response(prompt: str):
     json_data = {
         "model": "gpt-4-0125-preview",  # or "gpt-3.5-turbo" for cheaper
         "messages": [
-            {"role": "system", "content": "You are an expert strategic analyst for games like rainbow 6 seige. you can give an opinion on discord channel conversations. respond in short to mid-length responses"},
+            {"role": "system", "content": "You are an expert strategic analyst for games like rainbow 6 seige. you can give an opinion on discord channel conversations. respond in short responses"},
             {"role": "user", "content": prompt}
         ],
         "temperature": 0.7

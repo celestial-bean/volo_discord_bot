@@ -456,14 +456,16 @@ class WhisperSink(Sink):
                                 idx = text.index("go sit in the corner") + len("go sit in the corner")
                                 arg = str(text[idx:]).split(" ")[1].rstrip(".").rstrip(",")
                                 user_id=self.convertName(arg,nameDictionary)
+                                
                                 if user_id:
                                     if user_id!=self.bot.user.id:
-                                        future = asyncio.run_coroutine_threadsafe(self.guild.fetch_member(user_id), self.loop)
-                                        member = future.result()
-                                        if not any(r.id == ADMIN_ROLE_ID for r in member.roles):
+                                        member = asyncio.run_coroutine_threadsafe(self.guild.fetch_member(speaker.user), self.loop).result()
+                                        target=asyncio.run_coroutine_threadsafe(self.guild.fetch_member(user_id), self.loop).result()
+                                        
+                                        if any(r.id == ADMIN_ROLE_ID for r in member.roles) or not any(r.id == ADMIN_ROLE_ID for r in target.roles):
                                             channel=asyncio.run_coroutine_threadsafe(self.guild.fetch_channel(TIMEOUT_VC_ID),self.loop).result()
-                                            future=asyncio.run_coroutine_threadsafe(member.move_to(channel), self.loop)
-                                            future=future.result()
+                                            future=asyncio.run_coroutine_threadsafe(target.move_to(channel), self.loop)
+                                            future.result()
                                         else:
                                             print("Cannot timeout an admin")
                                     else:
@@ -509,18 +511,18 @@ class WhisperSink(Sink):
                             except Exception as e:
                                 print(f"Error in butt: {e}" )
                             
-                            try:
-                                if "taco" in text:
-                                    print("activating nom nom nom")
-                                    # Tells pydub where to find ffmpeg and ffprobe                       
-                                    YOUTUBE_URL="https://www.youtube.com/watch?v=UaMKUVxidpM"
-                                    if not os.path.exists("cache/taco.mp3"):
-                                        download_youtube_audio(YOUTUBE_URL,"cache","taco")
-                                    future=asyncio.run_coroutine_threadsafe(self.guild.change_voice_state(channel=self.vc.channel, self_mute=False),self.loop)
-                                    future=future.result()
-                                    self.vc.play(discord.FFmpegPCMAudio("cache/taco.mp3", **FFMPEG_OPTIONS), after=lambda e: print("Playback finished", e))
-                            except Exception as e:
-                                print(f"Error in nom nom nom: {e}" )
+                            # try:
+                            #     if "taco" in text:
+                            #         print("activating nom nom nom")
+                            #         # Tells pydub where to find ffmpeg and ffprobe                       
+                            #         YOUTUBE_URL="https://www.youtube.com/watch?v=UaMKUVxidpM"
+                            #         if not os.path.exists("cache/taco.mp3"):
+                            #             download_youtube_audio(YOUTUBE_URL,"cache","taco")
+                            #         future=asyncio.run_coroutine_threadsafe(self.guild.change_voice_state(channel=self.vc.channel, self_mute=False),self.loop)
+                            #         future=future.result()
+                            #         self.vc.play(discord.FFmpegPCMAudio("cache/taco.mp3", **FFMPEG_OPTIONS), after=lambda e: print("Playback finished", e))
+                            # except Exception as e:
+                            #     print(f"Error in nom nom nom: {e}" )
 
                             if text:
                                 self.memory.append(str(speaker.player)+": "+text)
