@@ -451,7 +451,7 @@ class WhisperSink(Sink):
                                         else:
                                             future=asyncio.run_coroutine_threadsafe(member.add_roles(role), self.loop)
                                             future=future.result()
-                                            asyncio.run_coroutine_threadsafe(delayRemoveRole(role,40), self.loop)# dont await
+                                            asyncio.run_coroutine_threadsafe(delayRemoveRole(role,60), self.loop)# dont await
                                             print(f"Added {role.name} to {member.display_name}")
                             except Exception as e:
                                 print(f"Error in Ant colony: {e}")
