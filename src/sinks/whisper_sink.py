@@ -75,6 +75,8 @@ GUILD_ID=int(os.getenv("GUILD_ID"))
 SHUTUP_ROLE_ID=int(os.getenv("SHUTUP_ROLE_ID"))
 ADMIN_ROLE_ID=int(os.getenv("ADMIN_ROLE_ID"))
 TIMEOUT_VC_ID=int(os.getenv("TIMEOUT_VC_ID"))
+ANT_COLONY_ROLE_ID=int(os.getenv("ANT_COLONY_ROLE_ID"))
+
 os.environ["PATH"] += os.pathsep + os.path.join("ffmpeg", "ffmpeg.exe")
 with open("nameDictionary.json","r") as f:
     nameDictionary=json.loads(f.read())
@@ -416,12 +418,12 @@ class WhisperSink(Sink):
                             try:
                                 if "shut up" in text:
                                     idx = text.index("shut up") + len("shut up")
-                                    arg = str(text[idx:]).split(" ")[1].rstrip(".").rstrip(",")
+                                    arg = str(text[idx:]).split(" ")[1].rstrip(".").rstrip(",").rstrip("!").rstrip("?")
                                     user_id=self.convertName(arg,nameDictionary)
                                     if user_id:
                                         future = asyncio.run_coroutine_threadsafe(self.guild.fetch_member(user_id), self.loop)
                                         member = future.result()
-                                        role = discord.utils.get(member.guild.roles, name="Shut up")
+                                        #role = discord.utils.get(member.guild.roles, name="Shut up")
                                         role= member.guild.get_role(SHUTUP_ROLE_ID)
                                         if role is None:
                                             print("Role not found.")
@@ -432,11 +434,32 @@ class WhisperSink(Sink):
                                             print(f"Added {role.name} to {member.display_name}")
                             except Exception as e:
                                 print(f"Error in shut up: {e}")
+
+                            try:    
+                                if "why don't you go study an ant colony" in text or "why don't you go study in ant colony" in text:
+                                    print("Triggering Ant Colony")
+                                    idx = text.index("why don't you go study an ant colony") + len("why don't you go study an ant colony")
+                                    arg = str(text[idx:]).split(" ")[1].rstrip(".").rstrip(",").rstrip("!").rstrip("?")
+                                    user_id=self.convertName(arg,nameDictionary)
+                                    if user_id:
+                                        future = asyncio.run_coroutine_threadsafe(self.guild.fetch_member(user_id), self.loop)
+                                        member = future.result()
+                                        #role = discord.utils.get(member.guild.roles, name="Ant Colony")
+                                        role= member.guild.get_role(ANT_COLONY_ROLE_ID)
+                                        if role is None:
+                                            print("Role not found.")
+                                        else:
+                                            future=asyncio.run_coroutine_threadsafe(member.add_roles(role), self.loop)
+                                            future=future.result()
+                                            asyncio.run_coroutine_threadsafe(delayRemoveRole(role,20), self.loop)# dont await
+                                            print(f"Added {role.name} to {member.display_name}")
+                            except Exception as e:
+                                print(f"Error in Ant colony: {e}")
                                 
                             try:
                                 if "what do you do with a soccer ball" in text:
                                     idx = text.index("what do you do with a soccer ball") + len("what do you do with a soccer ball")
-                                    arg = str(text[idx:]).split(" ")[1].rstrip(".").rstrip(",")
+                                    arg = str(text[idx:]).split(" ")[1].rstrip(".").rstrip(",").rstrip("!").rstrip("?")
                                     user_id=self.convertName(arg,nameDictionary)
                                     if user_id:
                                         if user_id!=self.bot.user.id:
@@ -454,7 +477,7 @@ class WhisperSink(Sink):
 
                             if "go sit in the corner" in text:
                                 idx = text.index("go sit in the corner") + len("go sit in the corner")
-                                arg = str(text[idx:]).split(" ")[1].rstrip(".").rstrip(",")
+                                arg = str(text[idx:]).split(" ")[1].rstrip(".").rstrip(",").rstrip("!").rstrip("?")
                                 user_id=self.convertName(arg,nameDictionary)
                                 
                                 if user_id:
