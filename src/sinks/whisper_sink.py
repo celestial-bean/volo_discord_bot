@@ -510,10 +510,10 @@ class WhisperSink(Sink):
                                     msg=asyncio.run_coroutine_threadsafe(chatgpt.get_chatgpt_response(prompt),self.loop).result()
                                     print(msg)
                                     tts=gTTS(text=msg,lang="en")
-                                    tts.save("assets/tts.mp3")
+                                    tts.save("cache/tts.mp3")
                                     future=asyncio.run_coroutine_threadsafe(self.guild.change_voice_state(channel=self.vc.channel, self_mute=False),self.loop)
                                     temp=future.result()
-                                    self.vc.play(discord.FFmpegPCMAudio(source="assets/tts.mp3", **FFMPEG_OPTIONS), after=lambda e: print("Done playing"))
+                                    self.vc.play(discord.FFmpegPCMAudio(source="cache/tts.mp3", **FFMPEG_OPTIONS), after=lambda e: print("Done playing"))
                                 except Exception as e:
                                     print(f"Error in chatgpt: {e}")
                             try:
