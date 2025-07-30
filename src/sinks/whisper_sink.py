@@ -166,8 +166,7 @@ class WhisperSink(Sink):
         self.guild=""
         self.generalChat=""
         self.listenerChannel=""
-        self.bot_log_channel=asyncio.run_coroutine_threadsafe(self.guild.fetch_channel(LOG_CHANNEL_ID),self.loop).result()
-
+        self.bot_log_channel=""
 
     def convertName(self,arg,nameDictionary): #returns int user id
                                 for member in self.members:
@@ -369,6 +368,8 @@ class WhisperSink(Sink):
                                 self.generalChat=asyncio.run_coroutine_threadsafe(self.guild.fetch_channel(GENERAL_CHAT_ID),self.loop).result()
                             if self.listenerChannel=="":
                                 self.listenerChannel=asyncio.run_coroutine_threadsafe(self.guild.fetch_channel(DISCORD_CHANNEL_ID),self.loop).result()
+                            if self.bot_log_channel=="":
+                                self.bot_log_channel=asyncio.run_coroutine_threadsafe(self.guild.fetch_channel(LOG_CHANNEL_ID),self.loop).result()
 
                             text=str(transcription.lower().strip())
                             if text:
