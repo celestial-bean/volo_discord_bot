@@ -76,6 +76,7 @@ SHUTUP_ROLE_ID=int(os.getenv("SHUTUP_ROLE_ID"))
 ADMIN_ROLE_ID=int(os.getenv("ADMIN_ROLE_ID"))
 TIMEOUT_VC_ID=int(os.getenv("TIMEOUT_VC_ID"))
 ANT_COLONY_ROLE_ID=int(os.getenv("ANT_COLONY_ROLE_ID"))
+LOG_CHANNEL_ID=int(os.getenv("LOG_CHANNEL_ID"))
 
 os.environ["PATH"] += os.pathsep + os.path.join("ffmpeg", "ffmpeg.exe")
 with open("nameDictionary.json","r") as f:
@@ -165,6 +166,8 @@ class WhisperSink(Sink):
         self.guild=""
         self.generalChat=""
         self.listenerChannel=""
+        self.bot_log_channel=asyncio.run_coroutine_threadsafe(self.guild.fetch_channel(LOG_CHANNEL_ID),self.loop).result()
+
 
     def convertName(self,arg,nameDictionary): #returns int user id
                                 for member in self.members:
@@ -174,7 +177,10 @@ class WhisperSink(Sink):
                                     return int(nameDictionary[arg])
                                 print("no user with name "+arg)
                                 return None
-    
+    def log(self, str, *args):
+        asyncio.run_coroutine_threadsafe(self.bot_log_channel.send(str), self.loop).result()
+        print(str, *args)
+     
     def start_voice_thread(self, on_exception=None):
         def thread_exception_hook(args):
             logger.debug(
@@ -371,7 +377,7 @@ class WhisperSink(Sink):
                             async def delayRemoveRole(role_id, delay):
                                 await asyncio.sleep(delay)
                                 await member.remove_roles(role_id)
-                                print(f"Removed {role.name} from {member.display_name}")
+                                self.log(f"Removed {role.name} from {member.display_name}")
 
                             
                             
@@ -389,22 +395,20 @@ class WhisperSink(Sink):
                                     future=asyncio.run_coroutine_threadsafe(self.listenerChannel.send(temp), self.loop)
                                     future=future.result()     
                             except Exception as e:
-                                print(f"Error in test: {e}" )
+                                self.log(f"Error in test: {e}" )
 
                                 try:
                                     if "i'm omni-ing it" in text:
-                                        print("i'm omni-ing it")
                                         idx = text.index("i'm omni-ing it") + len("i'm omni-ing it")
                                         user_id=str(speaker.user)
-                                        print(str(user_id)+" is omni-ing it")
                                         future=asyncio.run_coroutine_threadsafe(self.listenerChannel.send("<@"+user_id+"> is Omni-ing it."), self.loop)
                                         future=future.result()
                                 except Exception as e:
-                                    print(f"Error in omni-ing it: {e}")
+                                    self.log(f"Error in omni-ing it: {e}")
 
                             try:
                                 if "skippity toilet time" in text or "skibbity toilet time" in text or "skibbity-toilet time" in text:
-                                    print("activating skibidi toilet")
+                                    self.log("activating skibidi toilet")
                                     # Tells pydub where to find ffmpeg and ffprobe                       
                                     YOUTUBE_URL="https://www.youtube.com/watch?v=jnPKQV_ifYM"
                                     if not os.path.exists("cache/toilet.mp3"):
@@ -413,7 +417,7 @@ class WhisperSink(Sink):
                                     future=future.result()
                                     self.vc.play(discord.FFmpegPCMAudio("cache/toilet.mp3", **FFMPEG_OPTIONS), after=lambda e: print("Playback finished", e))
                             except Exception as e:
-                                print(f"Error in skibidi toilet: {e}")
+                                self.log(f"Error in skibidi toilet: {e}")
 
                             try:
                                 if "shut up" in text:
@@ -426,18 +430,18 @@ class WhisperSink(Sink):
                                         #role = discord.utils.get(member.guild.roles, name="Shut up")
                                         role= member.guild.get_role(SHUTUP_ROLE_ID)
                                         if role is None:
-                                            print("Role not found.")
+                                            self.log("Role not found.")
                                         else:
                                             future=asyncio.run_coroutine_threadsafe(member.add_roles(role), self.loop)
                                             future=future.result()
                                             asyncio.run_coroutine_threadsafe(delayRemoveRole(role,100), self.loop)# dont await
-                                            print(f"Added {role.name} to {member.display_name}")
+                                            self.log(f"Added {role.name} to {member.display_name}")
                             except Exception as e:
-                                print(f"Error in shut up: {e}")
+                                self.log(f"Error in shut up: {e}")
 
                             try:    
                                 if "why don't you go study an ant colony" in text or "why don't you go study in ant colony" in text:
-                                    print("Triggering Ant Colony")
+                                    self.log("Triggering Ant Colony")
                                     idx = text.index("why don't you go study an ant colony") + len("why don't you go study an ant colony")
                                     arg = str(text[idx:]).split(" ")[1].rstrip(".").rstrip(",").rstrip("!").rstrip("?")
                                     user_id=self.convertName(arg,nameDictionary)
@@ -447,14 +451,14 @@ class WhisperSink(Sink):
                                         #role = discord.utils.get(member.guild.roles, name="Ant Colony")
                                         role= member.guild.get_role(ANT_COLONY_ROLE_ID)
                                         if role is None:
-                                            print("Role not found.")
+                                            self.log("Role not found.")
                                         else:
                                             future=asyncio.run_coroutine_threadsafe(member.add_roles(role), self.loop)
                                             future=future.result()
                                             asyncio.run_coroutine_threadsafe(delayRemoveRole(role,60), self.loop)# dont await
-                                            print(f"Added {role.name} to {member.display_name}")
+                                            self.log(f"Added {role.name} to {member.display_name}")
                             except Exception as e:
-                                print(f"Error in Ant colony: {e}")
+                                self.log(f"Error in Ant colony: {e}")
                                 
                             try:
                                 if "what do you do with a soccer ball" in text:
@@ -469,11 +473,11 @@ class WhisperSink(Sink):
                                                 future=asyncio.run_coroutine_threadsafe(member.move_to(None), self.loop)
                                                 future=future.result()
                                             else:
-                                                print("Cannot kick an admin")
+                                                self.log("Cannot kick an admin")
                                         else:
-                                            print("Bot cannot kick itself")
+                                            self.log("Bot cannot kick itself")
                             except Exception as e:
-                                print(f"Error in soccer ball: {e}")
+                                self.log(f"Error in soccer ball: {e}")
 
                             if "go sit in the corner" in text:
                                 idx = text.index("go sit in the corner") + len("go sit in the corner")
@@ -490,9 +494,9 @@ class WhisperSink(Sink):
                                             future=asyncio.run_coroutine_threadsafe(target.move_to(channel), self.loop)
                                             future.result()
                                         else:
-                                            print("Cannot timeout an admin")
+                                            self.log("Cannot timeout an admin")
                                     else:
-                                        print("Bot cannot timeout itself")
+                                        self.log("Bot cannot timeout itself")
 
                             if "cheese" in text:
                                     i=text.count("cheese")
@@ -515,7 +519,7 @@ class WhisperSink(Sink):
                                     temp=future.result()
                                     self.vc.play(discord.FFmpegPCMAudio(source="assets/tts.mp3", **FFMPEG_OPTIONS), after=lambda e: print("Done playing"))
                                 except Exception as e:
-                                    print(f"Error in chatgpt: {e}")
+                                    self.log(f"Error in chatgpt: {e}")
                             try:
                                 super_secret_code(self,text,speaker,self.generalChat)
                             except Exception as e:
@@ -523,7 +527,7 @@ class WhisperSink(Sink):
 
                             try:
                                 if "butt" in text:
-                                    print("activating diggin in yo butt")
+                                    self.log("activating diggin in yo butt")
                                     # Tells pydub where to find ffmpeg and ffprobe                       
                                     YOUTUBE_URL="https://www.youtube.com/watch?v=QwtSnk84yZU"
                                     if not os.path.exists("cache/diggin.mp3"):
@@ -532,7 +536,7 @@ class WhisperSink(Sink):
                                     future=future.result()
                                     self.vc.play(discord.FFmpegPCMAudio("cache/diggin.mp3", **FFMPEG_OPTIONS), after=lambda e: print("Playback finished", e))
                             except Exception as e:
-                                print(f"Error in butt: {e}" )
+                                self.log(f"Error in butt: {e}" )
                             
                             # try:
                             #     if "taco" in text:
