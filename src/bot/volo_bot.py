@@ -6,12 +6,12 @@ from collections import defaultdict
 from src.sinks.whisper_sink import WhisperSink
 import discord
 import yaml
-
+from datetime import datetime, timedelta
 
 DISCORD_CHANNEL_ID = int(os.getenv("DISCORD_CHANNEL_ID"))
 TRANSCRIPTION_METHOD = os.getenv("TRANSCRIPTION_METHOD")
 PLAYER_MAP_FILE_PATH = os.getenv("PLAYER_MAP_FILE_PATH")
-
+GUILD_ID=int(os.getenv("GUILD_ID"))
 
 logger = logging.getLogger(__name__)
 
@@ -37,11 +37,41 @@ class VoloBot(discord.Bot):
             with open(PLAYER_MAP_FILE_PATH, "r", encoding="utf-8") as file:
                 self.player_map = yaml.safe_load(file)
 
-    
 
     async def on_ready(self):
         logger.info(f"Logged in as {self.user} to Discord.")
         self._is_ready = True
+        self.loop.create_task(self.schedule_weekly_task())
+
+    async def schedule_weekly_task(self):
+        TARGET_HOUR = 23
+        TARGET_MINUTE = 1
+        TARGET_WEEKDAY=4
+        while True:
+            now = datetime.now()
+            # # Calculate next Sunday at 14:30
+            days_ahead = TARGET_WEEKDAY - now.weekday()
+            if days_ahead <= 0:
+                if TARGET_HOUR>now.hour:
+                    days_ahead += 7  # Schedule for next Sunday
+
+            next_run = now + timedelta(days=days_ahead)
+            next_run = next_run.replace(hour=TARGET_HOUR, minute=TARGET_MINUTE, second=0, microsecond=0)
+
+            wait_seconds = (next_run - now).total_seconds()
+            print(f"Next scheduled task in {wait_seconds / 3600:.2f} hours.")
+            await asyncio.sleep(wait_seconds)
+
+            await self.do_scheduled_task()
+
+    async def do_scheduled_task(self):
+        try:
+            self.guild_whisper_sinks[GUILD_ID].vc.play(discord.FFmpegPCMAudio(source="assets/event.mp3", **{
+                                'options': '-vn',
+                                'executable': os.path.join("ffmpeg", "ffmpeg.exe")
+                                }), after=lambda e: print("Done playing"))
+        except Exception as e:
+            print(f"failed scheduled task: {e}")
 
 
     async def close_consumers(self):
