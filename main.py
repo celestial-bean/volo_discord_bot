@@ -16,7 +16,7 @@ from src.utils.pdf_generator import pdf_generator
 load_dotenv()
 DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 PLAYER_MAP_FILE_PATH = os.getenv("PLAYER_MAP_FILE_PATH")
-
+GUILD_ID=int(os.getenv("GUILD_ID"))
 logger = logging.getLogger()  # root logger
 
 
@@ -81,16 +81,45 @@ if __name__ == "__main__":
 
     @bot.event
     async def on_voice_state_update(member, before, after):
-        if member.id == bot.user.id:
-            # If the bot left the "before" channel
-            if after.channel is None:
-                guild_id = before.channel.guild.id
-                helper = bot.guild_to_helper.get(guild_id, None)
-                if helper:
-                    helper.set_vc(None)
-                    bot.guild_to_helper.pop(guild_id, None)
+        if member.bot:
+            return
 
-                bot._close_and_clean_sink_for_guild(guild_id)
+        # Get the guild the member is in
+        guild = member.guild
+        bot_voice = guild.me.voice
+
+        # CASE 1: A user joins a voice channel
+        if after.channel and (not before.channel or before.channel != after.channel):
+            voice_channel = after.channel
+
+            # Count non-bot members in that channel
+            non_bot_members = [m for m in voice_channel.members if not m.bot]
+
+            # If bot is not already connected and there are real users, join
+            if non_bot_members and not bot_voice:
+                vc = await voice_channel.connect()
+                helper = bot.guild_to_helper.get(GUILD_ID, BotHelper(bot))
+                helper.guild_id = GUILD_ID
+                helper.set_vc(vc)
+                bot.guild_to_helper[GUILD_ID] = helper
+                bot.start_whisper_sink()
+                bot.guild_is_recording[GUILD_ID] = True
+                print(f"Joined VC: {voice_channel.name}")
+
+        # CASE 2: Someone leaves a channel — check if the bot is in that channel and it's now empty
+        if before.channel:
+            voice_channel = before.channel
+            # If the bot is in that VC and it's now empty of humans, leave
+            if bot_voice and bot_voice.channel == voice_channel:
+                non_bot_members = [m for m in voice_channel.members if not m.bot]
+                if not non_bot_members:
+                    helper=bot.guild_to_helper[GUILD_ID]
+                    await helper.vc.disconnect()
+                    helper.guild_id = None
+                    helper.set_vc(None)
+                    bot.guild_to_helper.pop(GUILD_ID, None)
+                    print(f"Left VC: {voice_channel.name}")
+                    bot._close_and_clean_sink_for_guild(GUILD_ID)
 
     @bot.slash_command(name="connect", description="Add The Listener to your voice party.")
     async def connect(ctx: discord.context.ApplicationContext):
@@ -102,10 +131,10 @@ if __name__ == "__main__":
             await ctx.respond("You have not joined a party.", ephemeral=True)
             return
         # check if we are already connected to a voice channel
-        if bot.guild_to_helper.get(ctx.guild_id, None):
-            await ctx.respond("I'm already in a party", ephemeral=True)
-            return
-        await ctx.trigger_typing()
+        # if bot.guild_to_helper.get(ctx.guild_id, None):
+        #     await ctx.respond("I'm already in a party", ephemeral=True)
+        #     return
+        # await ctx.trigger_typing()
         try:
             guild_id = ctx.guild_id
             vc = await author_vc.channel.connect()
@@ -114,10 +143,10 @@ if __name__ == "__main__":
             helper.set_vc(vc)
             bot.guild_to_helper[guild_id] = helper
             await ctx.respond(f"success", ephemeral=True)
-            await ctx.guild.change_voice_state(channel=author_vc.channel, self_mute=True)
+            await ctx.guild.change_voice_state(channel=author_vc.channel)
         except Exception as e:
             await ctx.respond(f"{e}", ephemeral=True)
-
+    
     @bot.slash_command(name="scribe", description="Start listening.")
     async def ink(ctx: discord.context.ApplicationContext):
         await ctx.trigger_typing()
@@ -133,7 +162,7 @@ if __name__ == "__main__":
         if bot.guild_is_recording.get(ctx.guild_id, False):
             await ctx.respond("I'm already listening", ephemeral=True)
             return
-        bot.start_recording(ctx)
+        bot.start_recording()
         await ctx.respond("Begun listening", ephemeral=True)
     
     @bot.slash_command(name="stop", description="Stop listening")

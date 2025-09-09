@@ -87,7 +87,7 @@ class VoloBot(discord.Bot):
             whisper_sink.close()
 
     
-    def start_recording(self, ctx: discord.context.ApplicationContext):
+    def start_recording(self):
         """
         Start recording audio from the voice channel. Create a whisper sink
         and start sending transcripts to the queue.
@@ -96,22 +96,22 @@ class VoloBot(discord.Bot):
         subscription checks and limits.
         """
         try:
-            self.start_whisper_sink(ctx)
-            self.guild_is_recording[ctx.guild_id] = True
+            self.start_whisper_sink()
+            self.guild_is_recording[GUILD_ID] = True
         except Exception as e:
             logger.error(f"Error starting whisper sink: {e}")
 
-    def start_whisper_sink(self, ctx: discord.context.ApplicationContext):
-        guild_voice_sink = self.guild_whisper_sinks.get(ctx.guild_id, None)
+    def start_whisper_sink(self):
+        guild_voice_sink = self.guild_whisper_sinks.get(GUILD_ID, None)
         if guild_voice_sink:
             logger.debug(
-                f"Sink is already active for guild {ctx.guild_id}.")
+                f"Sink is already active for guild {GUILD_ID}.")
             return
 
-        async def on_stop_record_callback(sink: WhisperSink, ctx):
+        async def on_stop_record_callback(sink: WhisperSink):
             logger.debug(
-                f"{ctx.channel.guild.id} -> on_stop_record_callback")
-            self._close_and_clean_sink_for_guild(ctx.guild_id)
+                f"{GUILD_ID} -> on_stop_record_callback")
+            self._close_and_clean_sink_for_guild(GUILD_ID)
 
         transcript_queue = asyncio.Queue()
 
@@ -124,18 +124,18 @@ class VoloBot(discord.Bot):
             player_map=self.player_map,
             bot=self
         )
-        self.guild_to_helper[ctx.guild_id].vc.start_recording(
-            whisper_sink, on_stop_record_callback, ctx)
+        self.guild_to_helper[GUILD_ID].vc.start_recording(
+            whisper_sink, on_stop_record_callback)
         def on_thread_exception(e):
             logger.warning(
-                f"Whisper sink thread exception for guild {ctx.guild_id}. Retry in 5 seconds...\n{e}")
-            self._close_and_clean_sink_for_guild(ctx.guild_id)
+                f"Whisper sink thread exception for guild {GUILD_ID}. Retry in 5 seconds...\n{e}")
+            self._close_and_clean_sink_for_guild(GUILD_ID)
 
             # retry in 5 seconds
-            self.loop.call_later(5, self.start_recording, ctx)
+            self.loop.call_later(5, self.start_recording)
         whisper_sink.start_voice_thread(on_exception=on_thread_exception)
 
-        self.guild_whisper_sinks[ctx.guild_id] = whisper_sink
+        self.guild_whisper_sinks[GUILD_ID] = whisper_sink
 
     def stop_recording(self, ctx: discord.context.ApplicationContext):
         vc = ctx.guild.voice_client
