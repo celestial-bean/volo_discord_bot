@@ -81,7 +81,7 @@ class VoloBot(discord.Bot):
             guild_id, None)
 
         if whisper_sink:
-            logger.debug(f"Stopping whisper sink, requested by {guild_id}.")
+            print(f"Stopping whisper sink, requested by {guild_id}.")
             whisper_sink.stop_voice_thread()
             del self.guild_whisper_sinks[guild_id]
             whisper_sink.close()

@@ -73,7 +73,7 @@ if __name__ == "__main__":
     CLIArgs.update_from_args(args)
 
     configure_logging()
-    loop = asyncio.get_event_loop()
+    loop = asyncio.new_event_loop()
     
     from src.bot.volo_bot import VoloBot  
     
@@ -81,12 +81,14 @@ if __name__ == "__main__":
 
     @bot.event
     async def on_voice_state_update(member, before, after):
-        if member.bot:
-            return
-
         # Get the guild the member is in
         guild = member.guild
         bot_voice = guild.me.voice
+        if member==guild.me:
+            bot._close_and_clean_sink_for_guild(GUILD_ID)
+        if member.bot:
+            return
+
 
         # CASE 1: A user joins a voice channel
         if after.channel and (not before.channel or before.channel != after.channel):
@@ -102,8 +104,9 @@ if __name__ == "__main__":
                 helper.guild_id = GUILD_ID
                 helper.set_vc(vc)
                 bot.guild_to_helper[GUILD_ID] = helper
-                bot.start_whisper_sink()
+                bot.start_recording()
                 bot.guild_is_recording[GUILD_ID] = True
+                print("Started Sink")
                 print(f"Joined VC: {voice_channel.name}")
 
         # CASE 2: Someone leaves a channel — check if the bot is in that channel and it's now empty
@@ -114,12 +117,12 @@ if __name__ == "__main__":
                 non_bot_members = [m for m in voice_channel.members if not m.bot]
                 if not non_bot_members:
                     helper=bot.guild_to_helper[GUILD_ID]
-                    await helper.vc.disconnect()
+                    await helper.vc.disconnect(force=True)
                     helper.guild_id = None
                     helper.set_vc(None)
                     bot.guild_to_helper.pop(GUILD_ID, None)
                     print(f"Left VC: {voice_channel.name}")
-                    bot._close_and_clean_sink_for_guild(GUILD_ID)
+                    
 
     @bot.slash_command(name="connect", description="Add The Listener to your voice party.")
     async def connect(ctx: discord.context.ApplicationContext):
