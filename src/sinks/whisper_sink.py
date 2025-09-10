@@ -443,7 +443,7 @@ class WhisperSink(Sink):
                             try:    
                                 if "why don't you go study an ant colony" in text or "why don't you go study in ant colony" in text:
                                     self.log("Triggering Ant Colony")
-                                    idx = text.index("why don't you go study an ant colony") + len("why don't you go study an ant colony")
+                                    idx = text.index("why don't you go study") + len("why don't you go study an ant colony")+len(" an ant colony")
                                     arg = str(text[idx:]).split(" ")[1].rstrip(".").rstrip(",").rstrip("!").rstrip("?")
                                     user_id=self.convertName(arg,nameDictionary)
                                     if user_id:
@@ -517,8 +517,8 @@ class WhisperSink(Sink):
                                     print(msg)
                                     tts=gTTS(text=msg,lang="en")
                                     tts.save("assets/tts.mp3")
-                                    future=asyncio.run_coroutine_threadsafe(self.guild.change_voice_state(channel=self.vc.channel, self_mute=False),self.loop)
-                                    temp=future.result()
+                                    # future=asyncio.run_coroutine_threadsafe(self.guild.change_voice_state(channel=self.vc.channel, self_mute=False),self.loop)
+                                    # temp=future.result()
                                     self.vc.play(discord.FFmpegPCMAudio(source="assets/tts.mp3", **FFMPEG_OPTIONS), after=lambda e: print("Done playing"))
                                 except Exception as e:
                                     self.log(f"Error in chatgpt: {e}")
@@ -534,8 +534,8 @@ class WhisperSink(Sink):
                                     YOUTUBE_URL="https://www.youtube.com/watch?v=QwtSnk84yZU"
                                     if not os.path.exists("cache/diggin.mp3"):
                                         download_youtube_audio(YOUTUBE_URL,"cache","diggin")
-                                    future=asyncio.run_coroutine_threadsafe(self.guild.change_voice_state(channel=self.vc.channel, self_mute=False),self.loop)
-                                    future=future.result()
+                                    # future=asyncio.run_coroutine_threadsafe(self.guild.change_voice_state(channel=self.vc.channel, self_mute=False),self.loop)
+                                    # future=future.result()
                                     self.vc.play(discord.FFmpegPCMAudio("cache/diggin.mp3", **FFMPEG_OPTIONS), after=lambda e: print("Playback finished", e))
                             except Exception as e:
                                 self.log(f"Error in butt: {e}" )
