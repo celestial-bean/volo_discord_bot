@@ -443,7 +443,7 @@ class WhisperSink(Sink):
                             try:    
                                 if "why don't you go study an ant colony" in text or "why don't you go study in ant colony" in text:
                                     self.log("Triggering Ant Colony")
-                                    idx = text.index("why don't you go study") + len("why don't you go study an ant colony")+len(" an ant colony")
+                                    idx = text.index("why don't you go study") + len("why don't you go study an ant colony")
                                     arg = str(text[idx:]).split(" ")[1].rstrip(".").rstrip(",").rstrip("!").rstrip("?")
                                     user_id=self.convertName(arg,nameDictionary)
                                     if user_id:
