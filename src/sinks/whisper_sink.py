@@ -314,7 +314,12 @@ class WhisperSink(Sink):
             transcriptions.append(formatted_entry)
 
         return transcriptions
-
+    
+    async def delayRemoveRole(self, member,role, delay):
+        await asyncio.sleep(delay)
+        await member.remove_roles(role)
+        #self.log(f"Removed {role.name} from {member.display_name}") # this times out the bot apparently
+   
     def insert_voice(self):
         while self.running:
             try:
@@ -374,13 +379,6 @@ class WhisperSink(Sink):
                             text=str(transcription.lower().strip())
                             if text:
                                 print(str(speaker.player)+": "+text)
-                                
-                            async def delayRemoveRole(member,role, delay):
-                                await asyncio.sleep(delay)
-                                await member.remove_roles(role)
-                                self.log(f"Removed {role.name} from {member.display_name}")
-
-                            
                             
                             YDL_OPTIONS = {'format': 'bestaudio', 'noplaylist': 'True'}
                             FFMPEG_OPTIONS = {
@@ -435,7 +433,7 @@ class WhisperSink(Sink):
                                         else:
                                             future=asyncio.run_coroutine_threadsafe(member.add_roles(role), self.loop)
                                             future=future.result()
-                                            asyncio.run_coroutine_threadsafe(delayRemoveRole(member, role,100), self.loop)# dont await
+                                            asyncio.run_coroutine_threadsafe(self.delayRemoveRole(member, role,100), self.loop)# dont await
                                             self.log(f"Added {role.name} to {member.display_name}")
                             except Exception as e:
                                 self.log(f"Error in shut up: {e}")
@@ -457,7 +455,7 @@ class WhisperSink(Sink):
                                             future=asyncio.run_coroutine_threadsafe(member.add_roles(role), self.loop)
                                             future=future.result()
                                             asyncio.run_coroutine_threadsafe(member.move_to(None), self.loop)
-                                            asyncio.run_coroutine_threadsafe(delayRemoveRole(member, role,60), self.loop)# dont await
+                                            asyncio.run_coroutine_threadsafe(self.delayRemoveRole(member, role,60), self.loop)# dont await
                                             self.log(f"Added {role.name} to {member.display_name}")
                             except Exception as e:
                                 self.log(f"Error in Ant colony: {e}")
