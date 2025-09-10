@@ -414,8 +414,8 @@ class WhisperSink(Sink):
                                     YOUTUBE_URL="https://www.youtube.com/watch?v=jnPKQV_ifYM"
                                     if not os.path.exists("cache/toilet.mp3"):
                                         download_youtube_audio(YOUTUBE_URL,"cache","toilet")
-                                    future=asyncio.run_coroutine_threadsafe(self.guild.change_voice_state(channel=self.vc.channel, self_mute=False),self.loop)
-                                    future=future.result()
+                                    # future=asyncio.run_coroutine_threadsafe(self.guild.change_voice_state(channel=self.vc.channel, self_mute=False),self.loop)
+                                    # future=future.result()
                                     self.vc.play(discord.FFmpegPCMAudio("cache/toilet.mp3", **FFMPEG_OPTIONS), after=lambda e: print("Playback finished", e))
                             except Exception as e:
                                 self.log(f"Error in skibidi toilet: {e}")
@@ -574,9 +574,7 @@ class WhisperSink(Sink):
             except Exception as e:
                 logger.error(f"Error in insert_voice: {e}")
             
-
     def check_speaker_timeouts(self, current_speaker, transcription):
-
         # Copy the list to avoid modification during iteration
         for speaker in self.speakers[:]:
             if current_speaker.user == speaker.user:
