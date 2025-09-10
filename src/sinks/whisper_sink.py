@@ -375,9 +375,9 @@ class WhisperSink(Sink):
                             if text:
                                 print(str(speaker.player)+": "+text)
                                 
-                            async def delayRemoveRole(role_id, delay):
+                            async def delayRemoveRole(member,role, delay):
                                 await asyncio.sleep(delay)
-                                await member.remove_roles(role_id)
+                                await member.remove_roles(role)
                                 self.log(f"Removed {role.name} from {member.display_name}")
 
                             
@@ -435,7 +435,7 @@ class WhisperSink(Sink):
                                         else:
                                             future=asyncio.run_coroutine_threadsafe(member.add_roles(role), self.loop)
                                             future=future.result()
-                                            asyncio.run_coroutine_threadsafe(delayRemoveRole(role,100), self.loop)# dont await
+                                            asyncio.run_coroutine_threadsafe(delayRemoveRole(member, role,100), self.loop)# dont await
                                             self.log(f"Added {role.name} to {member.display_name}")
                             except Exception as e:
                                 self.log(f"Error in shut up: {e}")
@@ -457,7 +457,7 @@ class WhisperSink(Sink):
                                             future=asyncio.run_coroutine_threadsafe(member.add_roles(role), self.loop)
                                             future=future.result()
                                             asyncio.run_coroutine_threadsafe(member.move_to(None), self.loop)
-                                            asyncio.run_coroutine_threadsafe(delayRemoveRole(role,60), self.loop)# dont await
+                                            asyncio.run_coroutine_threadsafe(delayRemoveRole(member, role,60), self.loop)# dont await
                                             self.log(f"Added {role.name} to {member.display_name}")
                             except Exception as e:
                                 self.log(f"Error in Ant colony: {e}")
