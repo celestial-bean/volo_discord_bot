@@ -84,9 +84,7 @@ if __name__ == "__main__":
         # Get the guild the member is in
         guild = member.guild
         bot_voice = guild.me.voice
-        if member==guild.me:
-            bot._close_and_clean_sink_for_guild(GUILD_ID)
-        if member.bot:
+        if member.bot and member!=guild.me:
             return
 
 
@@ -122,6 +120,8 @@ if __name__ == "__main__":
                     helper.set_vc(None)
                     bot.guild_to_helper.pop(GUILD_ID, None)
                     print(f"Left VC: {voice_channel.name}")
+            if member==guild.me and (not before.channel or before.channel != after.channel):
+                bot._close_and_clean_sink_for_guild(GUILD_ID)
                     
 
     @bot.slash_command(name="connect", description="Add The Listener to your voice party.")
