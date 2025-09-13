@@ -126,15 +126,16 @@ class VoloBot(discord.Bot):
         )
         self.guild_to_helper[GUILD_ID].vc.start_recording(
             whisper_sink, on_stop_record_callback)
+        
         def on_thread_exception(e):
             logger.warning(
                 f"Whisper sink thread exception for guild {GUILD_ID}. Retry in 5 seconds...\n{e}")
+            logger.exception("Full traceback:", exc_info=e)
             self._close_and_clean_sink_for_guild(GUILD_ID)
-
             # retry in 5 seconds
             self.loop.call_later(5, self.start_recording)
-        whisper_sink.start_voice_thread(on_exception=on_thread_exception)
 
+        whisper_sink.start_voice_thread(on_exception=on_thread_exception)
         self.guild_whisper_sinks[GUILD_ID] = whisper_sink
 
     def stop_recording(self, ctx: discord.context.ApplicationContext):
