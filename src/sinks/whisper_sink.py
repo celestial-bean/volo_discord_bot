@@ -382,7 +382,7 @@ class WhisperSink(Sink):
                             
                             YDL_OPTIONS = {'format': 'bestaudio', 'noplaylist': 'True'}
                             FFMPEG_OPTIONS = {
-                                'options': '-vn',
+                                'options': '-vn -f s16le -ar 48000 -ac 2',
                                 'executable': os.path.join("ffmpeg", "ffmpeg.exe")
                                 }
                             
@@ -414,7 +414,7 @@ class WhisperSink(Sink):
                                         download_youtube_audio(YOUTUBE_URL,"cache","toilet")
                                     # future=asyncio.run_coroutine_threadsafe(self.guild.change_voice_state(channel=self.vc.channel, self_mute=False),self.loop)
                                     # future=future.result()
-                                    self.vc.play(discord.FFmpegPCMAudio("cache/toilet.mp3", **FFMPEG_OPTIONS), after=lambda e: print("Playback finished", e))
+                                    asyncio.to_thread(self.vc.play(discord.FFmpegPCMAudio("cache/toilet.mp3", **FFMPEG_OPTIONS), after=lambda e: print("Playback finished", e)),self.loop)
                             except Exception as e:
                                 self.log(f"Error in skibidi toilet: {e}")
 
