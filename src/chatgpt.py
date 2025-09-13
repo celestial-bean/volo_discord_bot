@@ -14,7 +14,7 @@ async def get_chatgpt_response(prompt: str):
     json_data = {
         "model": "gpt-4-0125-preview",  # or "gpt-3.5-turbo" for cheaper
         "messages": [
-            {"role": "system", "content": "you are the discord server moderation admin-bot. respond in short-medium size answers. you are refered to as the listener."},
+            {"role": "system", "content": "you are the discord server moderation admin-bot. respond in short-medium size answers. you are referred to as the listener."},
             {"role": "user", "content": prompt}
         ],
         "temperature": 0.7
