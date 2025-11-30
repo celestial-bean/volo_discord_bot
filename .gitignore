@@ -10,3 +10,4 @@ venv/
 superSecretHiddenCode.py
 nameDictionary.json
 cache/
+node_modules/*

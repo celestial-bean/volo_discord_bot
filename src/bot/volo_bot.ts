@@ -75,7 +75,7 @@ export class VoloBot extends Client {
       nextRun.setHours(TARGET_HOUR, TARGET_MINUTE, 0, 0);
 
       const waitSeconds = (nextRun.getTime() - now.getTime()) / 1000;
-      console.log(`Next scheduled task in ${waitSeconds / 3600:.2f} hours.`);
+      console.log(`Next scheduled task in ${waitSeconds / 3600} hours.`);
       
       await new Promise(resolve => setTimeout(resolve, waitSeconds * 1000));
       await this.doScheduledTask();
