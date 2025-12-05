@@ -1,6 +1,6 @@
 # Discord Voice
+#discord
 py-cord[voice]
-Discord
 
 # Async communication
 aio-pika
@@ -19,8 +19,8 @@ black
 pylint
 
 # OpenAI and speech recognition
-openaio
-iohttp
+openai
+aiohttp
 faster_whisper
 SpeechRecognition
 

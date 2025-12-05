@@ -105,9 +105,9 @@ if __name__ == "__main__":
         if bot.guild_to_helper.get(ctx.guild_id, None):
             await ctx.respond("I'm already in a party", ephemeral=True)
             return
-        await ctx.trigger_typing()
         try:
             guild_id = ctx.guild_id
+            await asyncio.sleep(0.5)
             vc = await author_vc.channel.connect()
             helper = bot.guild_to_helper.get(guild_id, BotHelper(bot))
             helper.guild_id = guild_id
@@ -120,7 +120,6 @@ if __name__ == "__main__":
 
     @bot.slash_command(name="scribe", description="Start listening.")
     async def ink(ctx: discord.context.ApplicationContext):
-        await ctx.trigger_typing()
         connect_command = next((cmd for cmd in ctx.bot.application_commands if cmd.name == "connect"), None)
         if not connect_command:
             connect_text = "`/connect`"
@@ -154,7 +153,6 @@ if __name__ == "__main__":
             await ctx.respond("Listening was not started", ephemeral=True)
             return
 
-        await ctx.trigger_typing()
         
         if bot.guild_is_recording.get(guild_id, False):
             await bot.get_transcription(ctx)
@@ -180,7 +178,6 @@ if __name__ == "__main__":
             await ctx.respond("Huh, weird.. where am I? Maybe we should party back up.", ephemeral=True)
             return
         
-        await ctx.trigger_typing()
         await bot_vc.disconnect()
         helper.guild_id = None
         helper.set_vc(None)

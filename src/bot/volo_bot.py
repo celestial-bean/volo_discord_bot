@@ -21,6 +21,7 @@ class VoloBot(discord.Bot):
         intents.message_content = True  # If you're reading messages
         intents.members = True          # Needed for guild.members
         intents.guilds = True
+        intents.voice_states=True
         super().__init__(command_prefix="!", loop=loop,intents=intents,
                          activity=discord.CustomActivity(name='Transcribing Audio to Text'))
         self.guild_to_helper = {}
