@@ -192,6 +192,7 @@
             "dev": "dev",
             "help": "help",
             "info": "info",
+            "join": "join",
             "test": "test"
         },
         "userCommands": {
@@ -208,6 +209,7 @@
             "dev": "Developer use only.",
             "help": "Find help or contact support.",
             "info": "View bot info.",
+            "join": "Join a voice channel.",
             "test": "Run the test command."
         },
         "argDescs": {

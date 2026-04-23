@@ -15,6 +15,12 @@ export class Permission {
                 return Lang.getRef('permissions.AddReactions', langCode);
             },
         },
+        BypassSlowmode: {
+            displayName(langCode: Locale): string {
+                return Lang.getRef('permissions.BypassSlowmode', langCode);
+            },
+
+        },
         Administrator: {
             displayName(langCode: Locale): string {
                 return Lang.getRef('permissions.Administrator', langCode);
