@@ -3,6 +3,7 @@
 __pycache__/
 Sessions/
 player_map.yml
+recordings/
 player_map.yaml
 .venv/
 venv/
