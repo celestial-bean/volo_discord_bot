@@ -1,11 +1,204 @@
-import { CommandInteraction, GuildMember, PermissionsString } from 'discord.js';
+import { CommandInteraction, GuildMember, PermissionsString, User } from 'discord.js';
 import { Command, CommandDeferType } from '../index.js';
 import { EventData } from '../../models/internal-models.js';
 import { Language } from '../../models/enum-helpers/index.js';
 import { Lang } from '../../services/index.js';
 import { InteractionUtils } from '../../utils/index.js';
+import prism from 'prism-media';
+import fs from 'fs';
+import { execSync } from 'child_process';
+import OpenAI from "openai";
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const config = require('../../../config/config.json');
 
-import { joinVoiceChannel, VoiceConnectionStatus, entersState } from '@discordjs/voice';
+import {
+    AudioPlayerStatus,
+    createAudioPlayer,
+    createAudioResource,
+    entersState,
+    EndBehaviorType,
+    joinVoiceChannel,
+    StreamType,
+    VoiceConnection,
+    VoiceConnectionStatus,
+    VoiceReceiver,
+} from '@discordjs/voice';
+type ActiveStream = {
+    opusStream: NodeJS.ReadableStream;
+    pcmStream: NodeJS.ReadableStream;
+    file: fs.WriteStream;
+    filePath: string;
+};
+
+const activeStreams = new Map<string, ActiveStream>();
+let recordingsCleared = false;
+
+const openai = new OpenAI({
+  apiKey: config.api.openaiApiKey,
+});
+
+
+
+function clearRecordingsDir(): void {
+    if (recordingsCleared) return;
+
+    const recordingsPath = './recordings';
+    if (fs.existsSync(recordingsPath)) {
+        try {
+            fs.rmSync(recordingsPath, { recursive: true, force: true });
+        } catch (err) {
+            console.error('Failed to clear recordings directory:', err);
+        }
+    }
+    fs.mkdirSync(recordingsPath, { recursive: true });
+    recordingsCleared = true;
+}
+
+async function transcribeAudio(pcmFilePath: string, wavFilePath: string): Promise<string | null> {
+    try {
+        // Convert PCM to WAV using ffmpeg
+        execSync(`ffmpeg -f s16le -ar 48000 -ac 2 -i "${pcmFilePath}" "${wavFilePath}" -y`, {
+            stdio: 'pipe'
+        });
+
+        // Transcribe with Whisper
+        execSync(`whisper "${wavFilePath}" --model small --output_format txt --device cuda --output_dir ./recordings`, {
+            encoding: 'utf-8',
+        });
+
+        // Read the transcription result
+        const textFilePath = wavFilePath.replace('.wav', '.txt');
+        const transcript = fs.readFileSync(textFilePath, 'utf-8').trim();
+
+        // Cleanup
+        fs.unlinkSync(pcmFilePath);
+        fs.unlinkSync(wavFilePath);
+        fs.unlinkSync(textFilePath);
+
+        return transcript;
+    } catch (error) {
+        console.error('Transcription error:', error);
+        // Cleanup on error
+        if (fs.existsSync(pcmFilePath)) fs.unlinkSync(pcmFilePath);
+        if (fs.existsSync(wavFilePath)) fs.unlinkSync(wavFilePath);
+        return null;
+    }
+}
+
+function logTranscript(userTag: string, transcript: string): void {
+    try {
+        const logDirectory = './recordings';
+        fs.mkdirSync(logDirectory, { recursive: true });
+        const logPath = `${logDirectory}/transcripts.log`;
+        const timestamp = new Date().toISOString();
+        const line = `${timestamp} | ${userTag} | ${transcript.replace(/\r?\n/g, ' ')}\n`;
+        fs.appendFileSync(logPath, line, { encoding: 'utf-8' });
+    } catch (err) {
+        console.error('Failed to write transcript log:', err);
+    }
+}
+
+function synthesizeSpeech(text: string, outputPath: string): void {
+    const sanitized = text.replace(/'/g, "''").replace(/\r?\n/g, ' ');
+    const command = `Add-Type -AssemblyName System.speech; $s = New-Object System.Speech.Synthesis.SpeechSynthesizer; $s.SetOutputToWaveFile('${outputPath}'); $s.Speak('${sanitized}'); $s.Dispose();`;
+    execSync(`powershell.exe -NoProfile -Command "${command}"`, { stdio: 'pipe' });
+}
+
+function speakText(connection: VoiceConnection, text: string): void {
+    const outputPath = `./recordings/tts-${Date.now()}.wav`;
+    try {
+        synthesizeSpeech(text, outputPath);
+        playSound(connection, outputPath, true);
+    } catch (error) {
+        console.error('Text-to-speech error:', error);
+        if (fs.existsSync(outputPath)) {
+            try {
+                fs.unlinkSync(outputPath);
+            } catch {
+                // ignore cleanup failure
+            }
+        }
+    }
+}
+
+function playSound(connection: VoiceConnection, filePath: string, cleanup = false): void {
+    if (!fs.existsSync(filePath)) {
+        console.warn(`Sound file does not exist: ${filePath}`);
+        return;
+    }
+
+    const player = createAudioPlayer();
+    const resource = createAudioResource(fs.createReadStream(filePath), {
+        inputType: StreamType.Arbitrary,
+    });
+
+    player.play(resource);
+    connection.subscribe(player);
+
+    player.on(AudioPlayerStatus.Idle, () => {
+        console.log(`Finished playing sound: ${filePath}`);
+        if (cleanup && fs.existsSync(filePath)) {
+            try {
+                fs.unlinkSync(filePath);
+            } catch (err) {
+                console.error(`Failed to delete playback file: ${filePath}`, err);
+            }
+        }
+    });
+
+    player.on('error', (error) => {
+        console.error(`Audio player error for ${filePath}:`, error);
+        if (cleanup && fs.existsSync(filePath)) {
+            try {
+                fs.unlinkSync(filePath);
+            } catch (err) {
+                console.error(`Failed to delete playback file after error: ${filePath}`, err);
+            }
+        }
+    });
+}
+
+interface TranscriptRule {
+    userFilter?: (user: User) => boolean;
+    contentFilter: RegExp;
+    action: (user: User, transcript: string, connection?: VoiceConnection) => void;
+}
+
+const transcriptRules: TranscriptRule[] = [
+    {
+        contentFilter: /summarize this/i,
+        action: async (user, transcript, connection) => {
+            console.log(`Trigger matched for ${user.tag}: summarize request -> ${transcript}`);
+            const text = fs.readFileSync(`./recordings/transcripts.log`, 'utf8');
+            const response = await openai.chat.completions.create({
+            model: "gpt-4.1-mini",
+            messages: [
+                { role: "system", content: "You are a discord member in a call." },
+                { role: "user", content: "please summarize this transcript: "+ transcript },
+            ],
+            max_tokens: 200,
+            });
+            const message = response.choices[0].message?.content;
+            console.log(`OpenAI response: ${message}`);
+            speakText(connection!, message || "Sorry, I couldn't generate a summary.")
+        },
+    },
+   
+];
+
+function handleTranscriptTriggers(user: User, transcript: string, connection?: VoiceConnection): void {
+    for (const rule of transcriptRules) {
+        if (rule.userFilter && !rule.userFilter(user)) continue;
+        if (!rule.contentFilter.test(transcript)) continue;
+
+        try {
+            rule.action(user, transcript, connection);
+        } catch (error) {
+            console.error(`Transcript rule error for ${user.tag}:`, error);
+        }
+    }
+}
 
 export class JoinCommand implements Command {
     public names = [Lang.getRef('chatCommands.join', Language.Default)];
@@ -23,11 +216,13 @@ export class JoinCommand implements Command {
                 return;
             }
             member = await intr.guild.members.fetch(intr.user.id);
-            
+
         }
 
         const channel = member.voice?.channel;
-        
+
+        clearRecordingsDir();
+
         console.log("Member voice channel:", channel?.id, channel?.name);
         if (!channel) {
             await InteractionUtils.send(intr, "Join a voice channel first.", true);
@@ -86,11 +281,82 @@ export class JoinCommand implements Command {
             return;
         }
 
-        receiver.speaking.on('start', async (userId) => {
+        receiver.speaking.on('start', async (userId: string) => {
+            if (activeStreams.has(userId)) return;
+
             const speakingMember = await channel.guild.members.fetch(userId).catch(() => null);
-            console.log(
-                `User started speaking: ${speakingMember?.user.tag ?? userId} (${userId}) in ${channel.name}`
-            );
+            console.log(`START: ${speakingMember?.user.tag ?? userId}`);
+
+            const opusStream = receiver.subscribe(userId, {
+                end: {
+                    behavior: EndBehaviorType.AfterSilence,
+                    duration: 1000,
+                },
+            });
+
+            const decoder = new prism.opus.Decoder({
+                frameSize: 960,
+                channels: 2,
+                rate: 48000,
+            });
+
+            const pcmStream = opusStream.pipe(decoder);
+
+            // Ensure recordings directory exists
+            fs.mkdirSync('./recordings', { recursive: true });
+            const filePath = `./recordings/${userId}-${Date.now()}.pcm`;
+            const file = fs.createWriteStream(filePath);
+            pcmStream.pipe(file);
+
+            activeStreams.set(userId, { opusStream, pcmStream, file, filePath });
+
+            opusStream.on('end', () => {
+                console.log(`END: ${speakingMember?.user.tag ?? userId}`);
+
+                const active = activeStreams.get(userId);
+                if (!active) {
+                    return;
+                }
+
+                const { file: activeFile, filePath: activePath } = active;
+                const wavFilePath = activePath.replace('.pcm', '.wav');
+
+                const transcriptUser = speakingMember?.user;
+                const userTag = transcriptUser?.tag ?? userId;
+                const startTranscription = async () => {
+                    try {
+                        const transcript = await transcribeAudio(activePath, wavFilePath);
+                        if (transcript) {
+                            console.log(`Transcription for ${userTag}: ${transcript}`);
+                            logTranscript(userTag, transcript);
+                            if (transcriptUser) {
+                                handleTranscriptTriggers(transcriptUser, transcript, connection);
+                            } else {
+                                console.warn(`No full User object available for ${userTag}; skipping triggers.`);
+                            }
+                        } else {
+                            console.warn(`Failed to transcribe audio for ${userTag}`);
+                        }
+                    } catch (err) {
+                        console.error(`Transcription error for ${userTag}:`, err);
+                    }
+                };
+
+                if (activeFile.writableFinished) {
+                    void startTranscription();
+                } else {
+                    activeFile.once('finish', () => {
+                        void startTranscription();
+                    });
+                }
+
+                activeStreams.delete(userId);
+            });
+
+            opusStream.on('error', (err: Error) => {
+                console.error(`Stream error for ${userId}:`, err);
+                activeStreams.delete(userId);
+            });
         });
 
         receiver.speaking.on('end', async (userId) => {
