@@ -175,7 +175,7 @@ const transcriptRules: TranscriptRule[] = [
             model: "gpt-4.1-mini",
             messages: [
                 { role: "system", content: "You are a discord member in a call." },
-                { role: "user", content: "please summarize this transcript: "+ transcript },
+                { role: "user", content: "please summarize this transcript: " + text },
             ],
             max_tokens: 200,
             });
