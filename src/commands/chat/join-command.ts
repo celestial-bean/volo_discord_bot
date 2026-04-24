@@ -6,7 +6,7 @@ import { Lang } from '../../services/index.js';
 import { InteractionUtils } from '../../utils/index.js';
 import prism from 'prism-media';
 import fs from 'fs';
-import { execSync } from 'child_process';
+import { execSync, spawn } from 'child_process';
 import OpenAI from "openai";
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
@@ -58,14 +58,45 @@ function clearRecordingsDir(): void {
 async function transcribeAudio(pcmFilePath: string, wavFilePath: string): Promise<string | null> {
     try {
         // Convert PCM to WAV using ffmpeg
-        execSync(`ffmpeg -f s16le -ar 48000 -ac 2 -i "${pcmFilePath}" "${wavFilePath}" -y`, {
-            stdio: 'pipe'
-        });
+        // execSync(`ffmpeg -f s16le -ar 48000 -ac 2 -i "${pcmFilePath}" "${wavFilePath}" -y`, {
+        //     stdio: 'pipe'
+        // });
+await new Promise<void>((resolve, reject) => {
+    const p = spawn('ffmpeg', [
+        '-f', 's16le',
+        '-ar', '48000',
+        '-ac', '2',
+        '-i', pcmFilePath,
+        wavFilePath,
+        '-y'
+    ]);
 
+    p.on('error', reject);
+
+    p.on('close', (code) => {
+        if (code === 0) resolve();
+        else reject(new Error(`ffmpeg exited with code ${code}`));
+    });
+});
         // Transcribe with Whisper
-        execSync(`whisper "${wavFilePath}" --model small --output_format txt --device cuda --output_dir ./recordings`, {
-            encoding: 'utf-8',
+        // execSync(`whisper "${wavFilePath}" --model small --output_format txt --device cuda --output_dir ./recordings`, {
+        //     encoding: 'utf-8',
+        // });
+       await new Promise((resolve, reject) => {
+        const p = spawn('whisper', [
+            wavFilePath,
+            '--model', 'small',
+            '--output_format', 'txt',
+            '--device', 'cuda',
+            '--output_dir', './recordings'
+        ]);
+
+        p.on('error', reject);
+        p.on('close', (code) => {
+            if (code === 0) resolve(void 0);
+            else reject(new Error(`Whisper exited with code ${code}`));
         });
+    });
 
         // Read the transcription result
         const textFilePath = wavFilePath.replace('.wav', '.txt');
