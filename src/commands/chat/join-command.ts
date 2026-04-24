@@ -222,8 +222,16 @@ const transcriptRules: TranscriptRule[] = [
             playSound(connection!, './assets/diggin_in_yo_butt.mp3');
             
         },
+        
     },
-   
+   {
+        contentFilter: /hey\s+(bot|bob)[,\s]*kick/i,
+        action: async (user, transcript, connection) => {
+            console.log(`Trigger matched for ${user.tag}: kick command -> ${transcript}`);
+            
+        },
+        
+    },
 ];
 
 function handleTranscriptTriggers(user: User, transcript: string, connection?: VoiceConnection): void {
