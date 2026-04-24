@@ -184,6 +184,14 @@ const transcriptRules: TranscriptRule[] = [
             speakText(connection!, message || "Sorry, I couldn't generate a summary.")
         },
     },
+    {
+        contentFilter: /\b(?:digg(?:in|ing) in (?:yo|your) butt)\b/i,
+        action: async (user, transcript, connection) => {
+            console.log(`Trigger matched for ${user.tag}: butt-related phrase -> ${transcript}`);
+            playSound(connection!, './assets/diggin_in_yo_butt.mp3');
+            
+        },
+    },
    
 ];
 
