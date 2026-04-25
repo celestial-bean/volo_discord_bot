@@ -1,47 +1,3 @@
-# Discord Bot TypeScript Template
-
-[![discord.js](https://img.shields.io/github/package-json/dependency-version/KevinNovak/Discord-Bot-TypeScript-Template/discord.js)](https://discord.js.org/)
-[![License](https://img.shields.io/badge/license-MIT-blue)](https://opensource.org/licenses/MIT)
-[![Stars](https://img.shields.io/github/stars/KevinNovak/Discord-Bot-TypeScript-Template.svg)](https://github.com/KevinNovak/Discord-Bot-TypeScript-Template/stargazers)
-[![Pull Requests](https://img.shields.io/badge/Pull%20Requests-Welcome!-brightgreen)](https://github.com/KevinNovak/Discord-Bot-TypeScript-Template/pulls)
-
-**Discord bot** - A discord.js bot template written with TypeScript.
-
-## Introduction
-
-This template was created to give developers a starting point for new Discord bots, so that much of the initial setup can be avoided and developers can instead focus on meaningful bot features. Developers can simply copy this repo, follow the [setup instructions](#setup) below, and have a working bot with many [boilerplate features](#features) already included!
-
-For help using this template, feel free to [join our support server](https://discord.gg/c9kQktCbsE)!
-
-[![Discord Shield](https://discord.com/api/guilds/660711235766976553/widget.png?style=shield)](https://discord.gg/c9kQktCbsE)
-
-## Features
-
-### Built-In Bot Features:
-
-- Basic command structure.
-- Rate limits and command cooldowns.
-- Welcome message when joining a server.
-- Shows server count in bot status.
-- Posts server count to popular bot list websites.
-- Support for multiple languages.
-
-### Developer Friendly:
-
-- Written with TypeScript.
-- Uses the [discord.js](https://discord.js.org/) framework.
-- Built-in debugging setup for VSCode.
-- Written with [ESM](https://nodejs.org/api/esm.html#introduction) for future compatibility with packages.
-- Support for running with the [PM2](https://pm2.keymetrics.io/) process manger.
-- Support for running with [Docker](https://www.docker.com/).
-
-### Scales as Your Bot Grows:
-
-- Supports [sharding](https://discordjs.guide/sharding/) which is required when your bot is in 2500+ servers.
-- Supports [clustering](https://github.com/KevinNovak/Discord-Bot-TypeScript-Template-Master-Api) which allows you to run your bot on multiple machines.
-
-## Commands
-
 This bot has a few example commands which can be modified as needed.
 
 ### Help Command
@@ -68,15 +24,12 @@ A generic command, `/test`, which can be copied to create additional commands.
 
 ### Dev Command
 
-A `/dev` command which can only be run by the bot developer. Shows developer information, but can be extended to perform developer-only actions.
+A `/join` command used to make the bot join a voice channel
 
-![](https://i.imgur.com/2o1vEno.png)
 
 ### Welcome Message
 
 A welcome message is sent to the server and owner when the bot is added.
-
-![](https://i.imgur.com/QBw8H8v.png)
 
 ## Setup
 
@@ -95,6 +48,7 @@ A welcome message is sent to the server and owner when the bot is added.
         - `client.token` - Your discord bot's token.
 4. Install packages.
     - Navigate into the downloaded source files and type `npm install`.
+    - Also run `pip install openai-whisper`
 5. Register commands.
     - In order to use slash commands, they first [have to be registered](https://discordjs.guide/creating-your-bot/command-deployment.html).
     - Type `npm run commands:register` to register the bot's commands.
@@ -115,111 +69,6 @@ You can run the bot in multiple modes:
 3. PM2 Mode
     - Type `npm run start:pm2`.
     - Similar to Manager Mode but uses [PM2](https://pm2.keymetrics.io/) to manage processes.
-
-## Bots Using This Template
-
-A list of Discord bots using this template.
-
-| Bot                                                                    | Servers                                                       |
-| ---------------------------------------------------------------------- | ------------------------------------------------------------- |
-| [Birthday Bot](https://top.gg/bot/656621136808902656)                  | ![](https://top.gg/api/widget/servers/656621136808902656.svg) |
-| [QOTD Bot](https://top.gg/bot/713586207119900693)                      | ![](https://top.gg/api/widget/servers/713586207119900693.svg) |
-| [Friend Time](https://top.gg/bot/471091072546766849)                   | ![](https://top.gg/api/widget/servers/471091072546766849.svg) |
-| [Bento](https://top.gg/bot/787041583580184609)                         | ![](https://top.gg/api/widget/servers/787041583580184609.svg) |
-| [NFT-Info](https://top.gg/bot/902249456072818708)                      | ![](https://top.gg/api/widget/servers/902249456072818708.svg) |
-| [Skylink-IF](https://top.gg/bot/929527099922993162)                    | ![](https://top.gg/api/widget/servers/929527099922993162.svg) |
-| [Topcoder TC-101](https://github.com/topcoder-platform/tc-discord-bot) |                                                               |
-
-Don't see your bot listed? [Contact us](https://discord.gg/c9kQktCbsE) to have your bot added!
-
-# V.O.L.O Discord Transcription Bot
-
-This project is a Discord bot that transcribes voice channel audio into text in real-time. It uses Whisper for audio transcription and is capable of handling multiple users in a voice channel.
-
-## Features
-
-- This project uses Pycord (see [Pycord Github](https://github.com/Pycord-Development/pycord))
-- This project uses Faster Whisper (see [Faster Whisper Github](https://github.com/SYSTRAN/faster-whisper))
-- Transcribes voice channel audio to text.
-- Supports multiple users.
-- Thread-safe operations for concurrent transcriptions.
-
-## Setup
-
-To set up and run this Discord bot, follow these steps:
-
-### Prerequisites
-
-- Python 3.7 or higher.
-- Discord bot token (see [Discord Developer Portal](https://discord.com/developers/applications)).
-- `ffmpeg` installed and added to your system's PATH.
-
-### Installation
-
-1. **Clone the Repository:**
-
-   ```bash
-   git clone https://github.com/your-github-username/discord-transcription-bot.git
-   cd discord-transcription-bot
-   ```
-
-2. **Create a Virtual Environment (optional but recommended):**
-
-   ```bash
-   python -m venv venv
-   # Activate the virtual environment
-   # On Windows: venv\Scripts\activate
-   # On macOS/Linux: source venv/bin/activate
-   ```
-
-3. **Install Dependencies:**
-
-   ```bash
-   pip install --user -r requirements.txt
-   ```
-
-4. **Environment Variables:**
-
-   Create a `.env` file in the root directory and add your Discord bot token and guild ID:
-
-   ```
-   DISCORD_BOT_TOKEN= discord token
-   GUILD_ID= server id
-   PLAYER_MAP_FILE_PATH= player_map.yml
-   DISCORD_CHANNEL_ID= logging channel id
-   SHUTUP_ROLE_ID= role id for the shutup command
-   OPENAI_API_KEY= openAI api key
-   ADMIN_ROLE_ID= id of admin role
-   TIMEOUT_VC_ID= id of timeout voice channel
-   ```
-
-### Configuration
-
-- Edit `player_map.yml` to map Discord user IDs to player and character names for transcription.
-- Adjust `audio_processing.py` for specific Whisper model settings or other preferences.
-
-## Usage
-
-1. **Start the Bot:**
-
-   ```bash
-   python main.py
-   ```
-
-2. **Bot Commands:**
-
-   - `/connect`: Connect VOLO to your voice channel.
-   - `/scribe`: Starts the transcription in the current voice channel.
-   - `/stop`: Stops the transcription.
-   - `/disconnect`: Disconnects the bot from the voice channel.
-
-## Contributing
-
-Contributions to this project are welcome. Please ensure to follow the project's coding style and submit pull requests for any new features or bug fixes.
-
-## License
-
-[MIT License](LICENSE)
 
 ## Acknowledgments
 

@@ -1,4 +1,4 @@
-import { CommandInteraction, GuildMember, PermissionsString, User } from 'discord.js';
+import { CommandInteraction, Guild, GuildMember, PermissionsString, User } from 'discord.js';
 import { Command, CommandDeferType } from '../index.js';
 import { EventData } from '../../models/internal-models.js';
 import { Language } from '../../models/enum-helpers/index.js';
@@ -193,7 +193,7 @@ function playSound(connection: VoiceConnection, filePath: string, cleanup = fals
 interface TranscriptRule {
     userFilter?: (user: User) => boolean;
     contentFilter: RegExp;
-    action: (user: User, transcript: string, connection?: VoiceConnection) => void;
+    action: (user: User, transcript: string, connection?: VoiceConnection, guild?: Guild) => void;
 }
 
 const transcriptRules: TranscriptRule[] = [
@@ -201,7 +201,8 @@ const transcriptRules: TranscriptRule[] = [
         contentFilter: /summarize this/i,
         action: async (user, transcript, connection) => {
             console.log(`Trigger matched for ${user.tag}: summarize request -> ${transcript}`);
-            const text = fs.readFileSync(`./recordings/transcripts.log`, 'utf8');
+            var text: string = fs.readFileSync(`./recordings/transcripts.log`, 'utf8');
+            text = text.split('\n').slice(-100).join('\n'); //get last 100 lines
             const response = await openai.chat.completions.create({
             model: "gpt-4.1-mini",
             messages: [
@@ -216,7 +217,7 @@ const transcriptRules: TranscriptRule[] = [
         },
     },
     {
-        contentFilter: /\b(?:digg(?:in|ing) in (?:yo|your) butt)\b/i,
+        contentFilter: /\b(?:dig(?:gin|ging) in (?:yo|your) butt)\b/i,
         action: async (user, transcript, connection) => {
             console.log(`Trigger matched for ${user.tag}: butt-related phrase -> ${transcript}`);
             playSound(connection!, './assets/diggin_in_yo_butt.mp3');
@@ -226,21 +227,27 @@ const transcriptRules: TranscriptRule[] = [
     },
    {
         contentFilter: /hey\s+(bot|bob)[,\s]*kick/i,
-        action: async (user, transcript, connection) => {
+        action: async (user, transcript, connection, guild: Guild) => {
             console.log(`Trigger matched for ${user.tag}: kick command -> ${transcript}`);
-            
+            var playerMap: { [key: string]: string } = JSON.parse(fs.readFileSync('../../../player-map.json', 'utf8'));
+            var playerId = playerMap[user.tag];
+            if (playerId) {
+                var player: GuildMember = await guild.members.fetch(playerId);
+                await player.voice.disconnect();
+            }
         },
         
     },
+    
 ];
 
-function handleTranscriptTriggers(user: User, transcript: string, connection?: VoiceConnection): void {
+function handleTranscriptTriggers(user: User, transcript: string, connection?: VoiceConnection, guild?: Guild): void {
     for (const rule of transcriptRules) {
         if (rule.userFilter && !rule.userFilter(user)) continue;
         if (!rule.contentFilter.test(transcript)) continue;
 
         try {
-            rule.action(user, transcript, connection);
+            rule.action(user, transcript, connection, guild);
         } catch (error) {
             console.error(`Transcript rule error for ${user.tag}:`, error);
         }
@@ -376,7 +383,7 @@ export class JoinCommand implements Command {
                             console.log(`Transcription for ${userTag}: ${transcript}`);
                             logTranscript(userTag, transcript);
                             if (transcriptUser) {
-                                handleTranscriptTriggers(transcriptUser, transcript, connection);
+                                handleTranscriptTriggers(transcriptUser, transcript, connection, intr.guild);
                             } else {
                                 console.warn(`No full User object available for ${userTag}; skipping triggers.`);
                             }

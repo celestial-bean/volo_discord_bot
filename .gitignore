@@ -2,13 +2,13 @@
 *.mp3
 __pycache__/
 Sessions/
-player_map.yml
+player_map.*
 recordings/
-player_map.yaml
+player-map.*
 .venv/
 venv/
 .logs/
-superSecretHiddenCode.py
+!assets/
 nameDictionary.json
 cache/# =====================================================
 # Custom
