@@ -267,7 +267,6 @@ export class JoinCommand implements Command {
         }
 
         const channel = member.voice?.channel;
-
         clearRecordingsDir();
 
         console.log("Member voice channel:", channel?.id, channel?.name);
@@ -369,7 +368,7 @@ export class JoinCommand implements Command {
                 const wavFilePath = activePath.replace('.pcm', '.wav');
 
                 const transcriptUser = speakingMember?.user;
-                const userTag = transcriptUser?.tag ?? userId;
+                const userTag = transcriptUser?.displayName ?? userId;
                 const startTranscription = async () => {
                     try {
                         const transcript = await transcribeAudio(activePath, wavFilePath);
