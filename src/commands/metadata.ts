@@ -78,6 +78,18 @@ export const ChatCommandMetadata: {
         dm_permission: true,
         default_member_permissions: undefined,
     },
+    UPDATE_PLAYER_MAP: {
+        type: ApplicationCommandType.ChatInput,
+        name: Lang.getRef('chatCommands.updatePlayerMap', Language.Default),
+        name_localizations: Lang.getRefLocalizationMap('chatCommands.updatePlayerMap'),
+        description: Lang.getRef('commandDescs.updatePlayerMap', Language.Default),
+        description_localizations: Lang.getRefLocalizationMap('commandDescs.updatePlayerMap'),
+        dm_permission: false,
+        default_member_permissions: PermissionsBitField.resolve([
+            PermissionFlagsBits.Administrator,
+        ]).toString(),
+        
+    },
 };
 
 export const MessageCommandMetadata: {
