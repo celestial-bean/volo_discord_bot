@@ -9,7 +9,9 @@ import fs from 'fs';
 import { execSync, spawn } from 'child_process';
 import OpenAI from "openai";
 import { createRequire } from 'module';
-import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
+import { ElevenLabsClient, stream } from '@elevenlabs/elevenlabs-js';
+import { pipeline } from "stream/promises";
+import type { Readable } from "stream";
 const require = createRequire(import.meta.url);
 const config = require('../../../config/config.json');
 
@@ -36,10 +38,10 @@ const activeStreams = new Map<string, ActiveStream>();
 let recordingsCleared = false;
 
 const openai = new OpenAI({
-  apiKey: config.api.openaiApiKey,
+    apiKey: config.api.openaiApiKey,
 });
 
-const ELEVENLABS_API_KEY=config.api.elevenlabsKey;
+const ELEVENLABS_API_KEY = config.api.elevenlabsKey;
 
 function clearRecordingsDir(): void {
     if (recordingsCleared) return;
@@ -62,42 +64,42 @@ async function transcribeAudio(pcmFilePath: string, wavFilePath: string): Promis
         // execSync(`ffmpeg -f s16le -ar 48000 -ac 2 -i "${pcmFilePath}" "${wavFilePath}" -y`, {
         //     stdio: 'pipe'
         // });
-await new Promise<void>((resolve, reject) => {
-    const p = spawn('ffmpeg', [
-        '-f', 's16le',
-        '-ar', '48000',
-        '-ac', '2',
-        '-i', pcmFilePath,
-        wavFilePath,
-        '-y'
-    ]);
+        await new Promise<void>((resolve, reject) => {
+            const p = spawn('ffmpeg', [
+                '-f', 's16le',
+                '-ar', '48000',
+                '-ac', '2',
+                '-i', pcmFilePath,
+                wavFilePath,
+                '-y'
+            ]);
 
-    p.on('error', reject);
+            p.on('error', reject);
 
-    p.on('close', (code) => {
-        if (code === 0) resolve();
-        else reject(new Error(`ffmpeg exited with code ${code}`));
-    });
-});
+            p.on('close', (code) => {
+                if (code === 0) resolve();
+                else reject(new Error(`ffmpeg exited with code ${code}`));
+            });
+        });
         // Transcribe with Whisper
         // execSync(`whisper "${wavFilePath}" --model small --output_format txt --device cuda --output_dir ./recordings`, {
         //     encoding: 'utf-8',
         // });
-       await new Promise((resolve, reject) => {
-        const p = spawn('whisper', [
-            wavFilePath,
-            '--model', 'small',
-            '--output_format', 'txt',
-            '--device', 'cuda',
-            '--output_dir', './recordings'
-        ]);
+        await new Promise((resolve, reject) => {
+            const p = spawn('whisper', [
+                wavFilePath,
+                '--model', 'small',
+                '--output_format', 'txt',
+                '--device', 'cuda',
+                '--output_dir', './recordings'
+            ]);
 
-        p.on('error', reject);
-        p.on('close', (code) => {
-            if (code === 0) resolve(void 0);
-            else reject(new Error(`Whisper exited with code ${code}`));
+            p.on('error', reject);
+            p.on('close', (code) => {
+                if (code === 0) resolve(void 0);
+                else reject(new Error(`Whisper exited with code ${code}`));
+            });
         });
-    });
 
         // Read the transcription result
         const textFilePath = wavFilePath.replace('.wav', '.txt');
@@ -133,32 +135,37 @@ function logTranscript(userTag: string, transcript: string): void {
 
 async function synthesizeSpeech(text: string, outputPath: string): Promise<void> {
     const sanitized = text.replace(/'/g, "''").replace(/\r?\n/g, ' ');
-    const voice = JSON.parse(fs.readFileSync("./voice.json", 'utf8'));
-    if (voice==null){
+    const voice = JSON.parse(fs.readFileSync("./voice.json", 'utf8')).voice;
+    if (voice == null) {
         const command = `Add-Type -AssemblyName System.speech; $s = New-Object System.Speech.Synthesis.SpeechSynthesizer; $s.SetOutputToWaveFile('${outputPath}'); $s.Speak('${sanitized}'); $s.Dispose();`;
         execSync(`powershell.exe -NoProfile -Command "${command}"`, { stdio: 'pipe' });
     }
-    else{
+    else {
         console.log(voice)
         if (!ELEVENLABS_API_KEY) {
-        throw new Error('Missing ELEVENLABS_API_KEY in environment variables');
+            throw new Error('Missing ELEVENLABS_API_KEY in environment variables');
         }
-        const elevenlabs = new ElevenLabsClient();
+        const elevenlabs = new ElevenLabsClient({ apiKey: ELEVENLABS_API_KEY });
         const audio = await elevenlabs.textToSpeech.convert(
-            voice, // "George" - browse voices at elevenlabs.io/app/voice-library
+            voice,
             {
                 text: text,
                 modelId: "eleven_multilingual_v2",
                 outputFormat: 'mp3_44100_128',
             }
-);
+        );
+        const fileStream = fs.createWriteStream(outputPath);
+
+    // 👇 THIS is the correct Node TS-safe way
+            await pipeline(audio as unknown as Readable, fileStream);
+    
     }
 }
 
-function speakText(connection: VoiceConnection, text: string): void {
+async function speakText(connection: VoiceConnection, text: string): Promise<void> {
     const outputPath = `./recordings/tts-${Date.now()}.wav`;
     try {
-        synthesizeSpeech(text, outputPath);
+        await synthesizeSpeech(text, outputPath);
         playSound(connection, outputPath, true);
     } catch (error) {
         console.error('Text-to-speech error:', error);
@@ -223,12 +230,12 @@ const transcriptRules: TranscriptRule[] = [
             var text: string = fs.readFileSync(`./recordings/transcripts.log`, 'utf8');
             text = text.split('\n').slice(-100).join('\n'); //get last 100 lines
             const response = await openai.chat.completions.create({
-            model: "gpt-4.1-mini",
-            messages: [
-                { role: "system", content: "You are a discord member in a call." },
-                { role: "user", content: "please summarize this transcript: " + text },
-            ],
-            max_tokens: 200,
+                model: "gpt-4.1-mini",
+                messages: [
+                    { role: "system", content: "You are a discord member in a call." },
+                    { role: "user", content: "please summarize this transcript: " + text },
+                ],
+                max_tokens: 200,
             });
             const message = response.choices[0].message?.content;
             console.log(`OpenAI response: ${message}`);
@@ -240,11 +247,11 @@ const transcriptRules: TranscriptRule[] = [
         action: async (user, transcript, connection) => {
             console.log(`Trigger matched for ${user.tag}: butt-related phrase -> ${transcript}`);
             playSound(connection!, './assets/diggin_in_yo_butt.mp3');
-            
+
         },
-        
+
     },
-   {
+    {
         contentFilter: /hey\s+(bot|bob)[,\s]*kick/i,
         action: async (user, transcript, connection, guild: Guild) => {
             console.log(`Trigger matched for ${user.tag}: kick command -> ${transcript}`);
@@ -256,9 +263,9 @@ const transcriptRules: TranscriptRule[] = [
                 await player.voice.disconnect();
             }
         },
-        
+
     },
-    
+
 ];
 
 function handleTranscriptTriggers(user: User, transcript: string, connection?: VoiceConnection, guild?: Guild): void {
@@ -438,6 +445,6 @@ export class JoinCommand implements Command {
                 `User stopped speaking: ${speakingMember?.user.tag ?? userId} (${userId}) in ${channel.name}`
             );
         });
-        
+
     }
 }
