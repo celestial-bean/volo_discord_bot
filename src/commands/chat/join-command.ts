@@ -229,8 +229,9 @@ const transcriptRules: TranscriptRule[] = [
         contentFilter: /hey\s+(bot|bob)[,\s]*kick/i,
         action: async (user, transcript, connection, guild: Guild) => {
             console.log(`Trigger matched for ${user.tag}: kick command -> ${transcript}`);
-            var playerMap: { [key: string]: string } = JSON.parse(fs.readFileSync('../../../player-map.json', 'utf8'));
-            var playerId = playerMap[user.tag];
+            const playerMap: { [key: string]: string } = JSON.parse(fs.readFileSync('./player-map.json', 'utf8'));
+            const targetUser = transcript.split('kick')[1].split(' ')[0];
+            const playerId = playerMap[targetUser];
             if (playerId) {
                 var player: GuildMember = await guild.members.fetch(playerId);
                 await player.voice.disconnect();

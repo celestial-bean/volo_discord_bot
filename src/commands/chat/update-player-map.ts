@@ -19,7 +19,7 @@ export class updatePlayerMapCommand implements Command {
             console.log(member.user.username);
             playerMap[member.user.username] = member.user.id;
         }
-        fs.writeFileSync('../../../player-map.json', JSON.stringify(playerMap, null, 2));
+        fs.writeFileSync('./player-map.json', JSON.stringify(playerMap, null, 2));
         await InteractionUtils.send(intr, "Player map updated", true);
     }
 }
