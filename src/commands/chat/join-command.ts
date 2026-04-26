@@ -27,6 +27,7 @@ import {
     VoiceConnectionStatus,
     VoiceReceiver,
 } from '@discordjs/voice';
+import { TIMEOUT } from 'dns';
 type ActiveStream = {
     opusStream: NodeJS.ReadableStream;
     pcmStream: NodeJS.ReadableStream;
@@ -42,6 +43,17 @@ const openai = new OpenAI({
 });
 
 const ELEVENLABS_API_KEY = config.api.elevenlabsKey;
+
+type PlayerMap = Record<string, string>;
+let playerMapCache: PlayerMap | null = null;
+
+function getPlayerMap(): PlayerMap {
+    if (playerMapCache) {
+        return playerMapCache;
+    }
+    playerMapCache = JSON.parse(fs.readFileSync('./player-map.json', 'utf8')) as PlayerMap;
+    return playerMapCache;
+}
 
 function clearRecordingsDir(): void {
     if (recordingsCleared) return;
@@ -256,7 +268,7 @@ const transcriptRules: TranscriptRule[] = [
         action: async (user, transcript, connection, guild: Guild) => {
             console.log(`Trigger matched for ${user.tag}: kick command -> ${transcript}`);
             var playerId;
-            const playerMap: { [key: string]: string } = JSON.parse(fs.readFileSync('./player-map.json', 'utf8'));
+            const playerMap = getPlayerMap();
             const targetUser = transcript.split('kick')[1].split(' ')[0].toLowerCase();
             console.log("Target: "+targetUser);
             const match = Object.keys(playerMap).find(name =>
@@ -273,7 +285,32 @@ const transcriptRules: TranscriptRule[] = [
         },
 
     },
-
+    {
+        contentFilter: /shut up/i,
+        action: async (user, transcript, connection, guild: Guild) => {
+            console.log(`Trigger matched for ${user.tag}: shutup command -> ${transcript}`);
+            var playerId;
+            const playerMap = getPlayerMap();
+            const targetUser = transcript.split('kick')[1].split(' ')[0].toLowerCase();
+            console.log("Target: "+targetUser);
+            const match = Object.keys(playerMap).find(name =>
+                name.toLowerCase().includes(targetUser)
+              );
+              if (match) {
+                playerId = playerMap[match];
+              }
+              
+            if (playerId) {
+                const timeoutRole=config.roles.shutup;
+                var player: GuildMember = await guild.members.fetch(playerId);
+                player.roles.add(timeoutRole);
+                console.log("Muted "+targetUser);
+                await new Promise(r=>setTimeout(r,30000));
+                console.log("Unmuting "+targetUser);
+                player.roles.remove(timeoutRole);
+            }
+        },
+    },
 ];
 
 function handleTranscriptTriggers(user: User, transcript: string, connection?: VoiceConnection, guild?: Guild): void {
