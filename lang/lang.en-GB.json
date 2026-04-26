@@ -193,7 +193,8 @@
             "help": "help",
             "info": "info",
             "join": "join",
-            "test": "test"
+            "test": "test",
+            "updatePlayerMap": "update-player-map"
         },
         "userCommands": {
             "viewDateJoined": "View Date Joined"
