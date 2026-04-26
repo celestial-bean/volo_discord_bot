@@ -20,6 +20,10 @@ export class UpdatePlayerMapCommand implements Command {
             //console.log(member.user.displayName);
             playerMap[member.user.displayName] = member.user.id;
         }
+        const nameDict=JSON.parse(fs.readFileSync('./name-dictionary.json', 'utf8'));
+        for (var name of nameDict){
+            playerMap[name]=nameDict[name];
+        }
         fs.writeFileSync("./player-map.json", JSON.stringify(playerMap, null, 2));
         await InteractionUtils.send(intr, "Player map updated",true);
     }
