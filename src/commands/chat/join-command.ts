@@ -7,11 +7,11 @@ import { InteractionUtils } from '../../utils/index.js';
 import prism from 'prism-media';
 import fs from 'fs';
 import { execSync, spawn } from 'child_process';
-import OpenAI from "openai";
+import OpenAI from 'openai';
 import { createRequire } from 'module';
 import { ElevenLabsClient, stream } from '@elevenlabs/elevenlabs-js';
-import { pipeline } from "stream/promises";
-import type { Readable } from "stream";
+import { pipeline } from 'stream/promises';
+import { Readable } from 'stream';
 const require = createRequire(import.meta.url);
 const config = require('../../../config/config.json');
 
@@ -27,7 +27,7 @@ import {
     VoiceConnectionStatus,
     VoiceReceiver,
 } from '@discordjs/voice';
-import { TIMEOUT } from 'dns';
+
 type ActiveStream = {
     opusStream: NodeJS.ReadableStream;
     pcmStream: NodeJS.ReadableStream;
@@ -46,6 +46,22 @@ const ELEVENLABS_API_KEY = config.api.elevenlabsKey;
 
 type PlayerMap = Record<string, string>;
 let playerMapCache: PlayerMap | null = null;
+
+function amplifyPCM(buffer: Buffer, gain: number): Buffer {
+    const output = Buffer.alloc(buffer.length);
+
+    for (let i = 0; i < buffer.length; i += 2) {
+        // assuming 16-bit PCM
+        let sample = buffer.readInt16LE(i);
+
+        // apply gain
+        sample = Math.max(-32768, Math.min(32767, sample * gain));
+
+        output.writeInt16LE(sample, i);
+    }
+
+    return output;
+}
 
 function getPlayerMap(): PlayerMap {
     if (playerMapCache) {
@@ -78,17 +94,21 @@ async function transcribeAudio(pcmFilePath: string, wavFilePath: string): Promis
         // });
         await new Promise<void>((resolve, reject) => {
             const p = spawn('ffmpeg', [
-                '-f', 's16le',
-                '-ar', '48000',
-                '-ac', '2',
-                '-i', pcmFilePath,
+                '-f',
+                's16le',
+                '-ar',
+                '48000',
+                '-ac',
+                '2',
+                '-i',
+                pcmFilePath,
                 wavFilePath,
-                '-y'
+                '-y',
             ]);
 
             p.on('error', reject);
 
-            p.on('close', (code) => {
+            p.on('close', code => {
                 if (code === 0) resolve();
                 else reject(new Error(`ffmpeg exited with code ${code}`));
             });
@@ -100,14 +120,18 @@ async function transcribeAudio(pcmFilePath: string, wavFilePath: string): Promis
         await new Promise((resolve, reject) => {
             const p = spawn('whisper', [
                 wavFilePath,
-                '--model', 'small',
-                '--output_format', 'txt',
-                '--device', 'cuda',
-                '--output_dir', './recordings'
+                '--model',
+                'small',
+                '--output_format',
+                'txt',
+                '--device',
+                'cuda',
+                '--output_dir',
+                './recordings',
             ]);
 
             p.on('error', reject);
-            p.on('close', (code) => {
+            p.on('close', code => {
                 if (code === 0) resolve(void 0);
                 else reject(new Error(`Whisper exited with code ${code}`));
             });
@@ -147,30 +171,41 @@ function logTranscript(userTag: string, transcript: string): void {
 
 async function synthesizeSpeech(text: string, outputPath: string): Promise<void> {
     const sanitized = text.replace(/'/g, "''").replace(/\r?\n/g, ' ');
-    const voice = JSON.parse(fs.readFileSync("./voice.json", 'utf8')).voice;
+    const voice = JSON.parse(fs.readFileSync('./voice.json', 'utf8')).voice;
     if (voice == null) {
         const command = `Add-Type -AssemblyName System.speech; $s = New-Object System.Speech.Synthesis.SpeechSynthesizer; $s.SetOutputToWaveFile('${outputPath}'); $s.Speak('${sanitized}'); $s.Dispose();`;
         execSync(`powershell.exe -NoProfile -Command "${command}"`, { stdio: 'pipe' });
-    }
-    else {
-        console.log(voice)
+    } else {
         if (!ELEVENLABS_API_KEY) {
             throw new Error('Missing ELEVENLABS_API_KEY in environment variables');
         }
+        const ff = spawn('ffmpeg', [
+            '-hide_banner',
+            '-loglevel',
+            'error',
+            '-i',
+            'pipe:0',
+            '-filter:a',
+            'volume=2.0', // 2x louder; try 1.5, 3.0, etc
+            '-y',
+            outputPath,
+        ]);
         const elevenlabs = new ElevenLabsClient({ apiKey: ELEVENLABS_API_KEY });
-        const audio = await elevenlabs.textToSpeech.convert(
-            voice,
-            {
-                text: text,
-                modelId: "eleven_multilingual_v2",
-                outputFormat: 'mp3_44100_128',
-            }
-        );
-        const fileStream = fs.createWriteStream(outputPath);
+        const audio = await elevenlabs.textToSpeech.convert(voice, {
+            text: text,
+            modelId: 'eleven_multilingual_v2',
+            outputFormat: 'mp3_44100_128',
+        });
+        const nodeAudio = Readable.fromWeb(audio as unknown as globalThis.ReadableStream);
 
-    // 👇 THIS is the correct Node TS-safe way
-            await pipeline(audio as unknown as Readable, fileStream);
-    
+        const fileStream = fs.createWriteStream(outputPath);
+        await pipeline(nodeAudio, ff.stdin);
+        await new Promise<void>((resolve, reject) => {
+            ff.on('error', reject);
+            ff.on('close', code =>
+                code === 0 ? resolve() : reject(new Error(`ffmpeg exited ${code}`))
+            );
+        });
     }
 }
 
@@ -216,7 +251,7 @@ function playSound(connection: VoiceConnection, filePath: string, cleanup = fals
         }
     });
 
-    player.on('error', (error) => {
+    player.on('error', error => {
         console.error(`Audio player error for ${filePath}:`, error);
         if (cleanup && fs.existsSync(filePath)) {
             try {
@@ -242,16 +277,16 @@ const transcriptRules: TranscriptRule[] = [
             var text: string = fs.readFileSync(`./recordings/transcripts.log`, 'utf8');
             text = text.split('\n').slice(-100).join('\n'); //get last 100 lines
             const response = await openai.chat.completions.create({
-                model: "gpt-4.1-mini",
+                model: 'gpt-4.1-mini',
                 messages: [
-                    { role: "system", content: "You are a discord member in a call." },
-                    { role: "user", content: "please summarize this transcript: " + text },
+                    { role: 'system', content: 'You are a discord member in a call.' },
+                    { role: 'user', content: 'please summarize this transcript: ' + text },
                 ],
                 max_tokens: 200,
             });
             const message = response.choices[0].message?.content;
             console.log(`OpenAI response: ${message}`);
-            speakText(connection!, message || "Sorry, I couldn't generate a summary.")
+            speakText(connection!, message || "Sorry, I couldn't generate a summary.");
         },
     },
     {
@@ -259,9 +294,7 @@ const transcriptRules: TranscriptRule[] = [
         action: async (user, transcript, connection) => {
             console.log(`Trigger matched for ${user.tag}: butt-related phrase -> ${transcript}`);
             playSound(connection!, './assets/diggin_in_yo_butt.mp3');
-
         },
-
     },
     {
         contentFilter: /hey\s+(bot|bob)[,\s]*kick/i,
@@ -270,20 +303,19 @@ const transcriptRules: TranscriptRule[] = [
             var playerId;
             const playerMap = getPlayerMap();
             const targetUser = transcript.split('kick')[1].split(' ')[0].toLowerCase();
-            console.log("Target: "+targetUser);
+            console.log('Target: ' + targetUser);
             const match = Object.keys(playerMap).find(name =>
                 name.toLowerCase().includes(targetUser)
-              );
-              if (match) {
+            );
+            if (match) {
                 playerId = playerMap[match];
-              }
-              
+            }
+
             if (playerId) {
                 var player: GuildMember = await guild.members.fetch(playerId);
                 await player.voice.disconnect();
             }
         },
-
     },
     {
         contentFilter: /shut up/i,
@@ -292,28 +324,33 @@ const transcriptRules: TranscriptRule[] = [
             var playerId;
             const playerMap = getPlayerMap();
             const targetUser = transcript.split('kick')[1].split(' ')[0].toLowerCase();
-            console.log("Target: "+targetUser);
+            console.log('Target: ' + targetUser);
             const match = Object.keys(playerMap).find(name =>
                 name.toLowerCase().includes(targetUser)
-              );
-              if (match) {
+            );
+            if (match) {
                 playerId = playerMap[match];
-              }
-              
+            }
+
             if (playerId) {
-                const timeoutRole=config.roles.shutup;
+                const timeoutRole = config.roles.shutup;
                 var player: GuildMember = await guild.members.fetch(playerId);
                 player.roles.add(timeoutRole);
-                console.log("Muted "+targetUser);
-                await new Promise(r=>setTimeout(r,30000));
-                console.log("Unmuting "+targetUser);
+                console.log('Muted ' + targetUser);
+                await new Promise(r => setTimeout(r, 30000));
+                console.log('Unmuting ' + targetUser);
                 player.roles.remove(timeoutRole);
             }
         },
     },
 ];
 
-function handleTranscriptTriggers(user: User, transcript: string, connection?: VoiceConnection, guild?: Guild): void {
+function handleTranscriptTriggers(
+    user: User,
+    transcript: string,
+    connection?: VoiceConnection,
+    guild?: Guild
+): void {
     for (const rule of transcriptRules) {
         if (rule.userFilter && !rule.userFilter(user)) continue;
         if (!rule.contentFilter.test(transcript)) continue;
@@ -338,25 +375,28 @@ export class JoinCommand implements Command {
         let member = intr.member;
         if (!(member instanceof GuildMember)) {
             if (!intr.guild) {
-                await InteractionUtils.send(intr, "This command can only be used in a server.", true);
+                await InteractionUtils.send(
+                    intr,
+                    'This command can only be used in a server.',
+                    true
+                );
                 return;
             }
             member = await intr.guild.members.fetch(intr.user.id);
-
         }
 
         const channel = member.voice?.channel;
         clearRecordingsDir();
 
-        console.log("Member voice channel:", channel?.id, channel?.name);
+        console.log('Member voice channel:', channel?.id, channel?.name);
         if (!channel) {
-            await InteractionUtils.send(intr, "Join a voice channel first.", true);
+            await InteractionUtils.send(intr, 'Join a voice channel first.', true);
             return;
         }
 
         const botMember = channel.guild.members.me;
         const botPermissions = botMember?.permissionsIn(channel);
-        console.log("Bot voice permissions:", botPermissions?.toArray());
+        console.log('Bot voice permissions:', botPermissions?.toArray());
         if (!botPermissions?.has('Connect') || !botPermissions?.has('Speak')) {
             await InteractionUtils.send(
                 intr,
@@ -366,7 +406,9 @@ export class JoinCommand implements Command {
             return;
         }
 
-        console.log(`Joining voice channel: ${channel.name} (${channel.id}) in guild: ${channel.guild.name} (${channel.guild.id})`);
+        console.log(
+            `Joining voice channel: ${channel.name} (${channel.id}) in guild: ${channel.guild.name} (${channel.guild.id})`
+        );
 
         const connection = joinVoiceChannel({
             channelId: channel.id,
@@ -380,7 +422,7 @@ export class JoinCommand implements Command {
             console.log(`Voice connection state: ${oldState.status} -> ${newState.status}`);
         });
 
-        connection.on('error', (error) => {
+        connection.on('error', error => {
             console.error('Voice connection error:', error);
         });
 
@@ -397,7 +439,7 @@ export class JoinCommand implements Command {
             return;
         }
 
-        await InteractionUtils.send(intr, "Joined voice channel.", true);
+        await InteractionUtils.send(intr, 'Joined voice channel.', true);
 
         // 👇 START SIMPLE: log when people talk
         const receiver = connection.receiver;
@@ -455,9 +497,16 @@ export class JoinCommand implements Command {
                             console.log(`Transcription for ${userTag}: ${transcript}`);
                             logTranscript(userTag, transcript);
                             if (transcriptUser) {
-                                handleTranscriptTriggers(transcriptUser, transcript, connection, intr.guild);
+                                handleTranscriptTriggers(
+                                    transcriptUser,
+                                    transcript,
+                                    connection,
+                                    intr.guild
+                                );
                             } else {
-                                console.warn(`No full User object available for ${userTag}; skipping triggers.`);
+                                console.warn(
+                                    `No full User object available for ${userTag}; skipping triggers.`
+                                );
                             }
                         } else {
                             console.warn(`Failed to transcribe audio for ${userTag}`);
@@ -484,12 +533,11 @@ export class JoinCommand implements Command {
             });
         });
 
-        receiver.speaking.on('end', async (userId) => {
+        receiver.speaking.on('end', async userId => {
             const speakingMember = await channel.guild.members.fetch(userId).catch(() => null);
             console.log(
                 `User stopped speaking: ${speakingMember?.user.tag ?? userId} (${userId}) in ${channel.name}`
             );
         });
-
     }
 }
