@@ -10,7 +10,7 @@ voice.json
 venv/
 .logs/
 !assets/
-nameDictionary.json
+name-dictionary.json
 cache/# =====================================================
 # Custom
 # =====================================================
