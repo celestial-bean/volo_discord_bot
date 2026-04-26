@@ -419,5 +419,6 @@ export class JoinCommand implements Command {
                 `User stopped speaking: ${speakingMember?.user.tag ?? userId} (${userId}) in ${channel.name}`
             );
         });
+        
     }
 }

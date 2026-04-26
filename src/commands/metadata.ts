@@ -1,4 +1,5 @@
 import {
+    ApplicationCommandOptionType,
     ApplicationCommandType,
     PermissionFlagsBits,
     PermissionsBitField,
@@ -80,15 +81,37 @@ export const ChatCommandMetadata: {
     },
     UPDATE_PLAYER_MAP: {
         type: ApplicationCommandType.ChatInput,
-        name: Lang.getRef('chatCommands.updatePlayerMap', Language.Default),
-        name_localizations: Lang.getRefLocalizationMap('chatCommands.updatePlayerMap'),
-        description: Lang.getRef('commandDescs.updatePlayerMap', Language.Default),
-        description_localizations: Lang.getRefLocalizationMap('commandDescs.updatePlayerMap'),
+        name: Lang.getRef('chatCommands.update_player_map', Language.Default),
+        name_localizations: Lang.getRefLocalizationMap('chatCommands.update_player_map'),
+        description: Lang.getRef('commandDescs.update_player_map', Language.Default),
+        description_localizations: Lang.getRefLocalizationMap('commandDescs.update_player_map'),
         dm_permission: false,
         default_member_permissions: PermissionsBitField.resolve([
             PermissionFlagsBits.Administrator,
         ]).toString(),
         
+    },
+    SET_VOICE: {
+        type: ApplicationCommandType.ChatInput,
+        name: Lang.getRef('chatCommands.set_voice', Language.Default),
+        name_localizations: Lang.getRefLocalizationMap('chatCommands.set_voice'),
+        description: Lang.getRef('commandDescs.set_voice', Language.Default),
+        description_localizations: Lang.getRefLocalizationMap('commandDescs.set_voice'),
+        dm_permission: true,
+        default_member_permissions: undefined,
+        options: [
+            {
+              type: ApplicationCommandOptionType.String,
+              name: 'voice',
+              description: 'Pick a voice',
+              required: true,
+              choices: [
+                { name: 'Adrian', value: 'Adrian' },
+                { name: 'Master Chief', value: 'Master Chief' },
+                { name: 'Loic', value: 'Loic' },
+              ],
+            },
+          ],
     },
 };
 

@@ -194,7 +194,8 @@
             "info": "info",
             "join": "join",
             "test": "test",
-            "updatePlayerMap": "update-player-map"
+            "update_player_map": "update_player_map",
+            "set_voice": "set_voice"
         },
         "userCommands": {
             "viewDateJoined": "View Date Joined"
@@ -211,7 +212,9 @@
             "help": "Find help or contact support.",
             "info": "View bot info.",
             "join": "Join a voice channel.",
-            "test": "Run the test command."
+            "test": "Run the test command.",
+            "update_player_map": "Updates the player map",
+            "set_voice":"Set the voice to be used"
         },
         "argDescs": {
             "devCommand": "Command.",

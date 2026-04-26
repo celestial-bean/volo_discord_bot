@@ -6,8 +6,8 @@ import { Lang } from '../../services/index.js';
 import { InteractionUtils } from '../../utils/index.js';
 import { Command, CommandDeferType } from '../index.js';
 
-export class updatePlayerMapCommand implements Command {
-    public names = [Lang.getRef('chatCommands.updatePlayerMap', Language.Default)];
+export class UpdatePlayerMapCommand implements Command {
+    public names = [Lang.getRef('chatCommands.update_player_map', Language.Default)];
     public deferType = CommandDeferType.PUBLIC;
     public requireClientPerms: PermissionsString[] = ['Administrator'];
 
@@ -20,6 +20,6 @@ export class updatePlayerMapCommand implements Command {
             playerMap[member.user.username] = member.user.id;
         }
         fs.writeFileSync('./player-map.json', JSON.stringify(playerMap, null, 2));
-        await InteractionUtils.send(intr, "Player map updated", true);
+        await InteractionUtils.send(intr, "Player map updated");
     }
 }
