@@ -9,6 +9,7 @@ import fs from 'fs';
 import { execSync, spawn } from 'child_process';
 import OpenAI from "openai";
 import { createRequire } from 'module';
+import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
 const require = createRequire(import.meta.url);
 const config = require('../../../config/config.json');
 
@@ -38,7 +39,7 @@ const openai = new OpenAI({
   apiKey: config.api.openaiApiKey,
 });
 
-
+const ELEVENLABS_API_KEY=config.api.elevenlabsKey;
 
 function clearRecordingsDir(): void {
     if (recordingsCleared) return;
@@ -130,10 +131,28 @@ function logTranscript(userTag: string, transcript: string): void {
     }
 }
 
-function synthesizeSpeech(text: string, outputPath: string): void {
+async function synthesizeSpeech(text: string, outputPath: string): Promise<void> {
     const sanitized = text.replace(/'/g, "''").replace(/\r?\n/g, ' ');
-    const command = `Add-Type -AssemblyName System.speech; $s = New-Object System.Speech.Synthesis.SpeechSynthesizer; $s.SetOutputToWaveFile('${outputPath}'); $s.Speak('${sanitized}'); $s.Dispose();`;
-    execSync(`powershell.exe -NoProfile -Command "${command}"`, { stdio: 'pipe' });
+    const voice = JSON.parse(fs.readFileSync("./voice.json", 'utf8'));
+    if (voice==null){
+        const command = `Add-Type -AssemblyName System.speech; $s = New-Object System.Speech.Synthesis.SpeechSynthesizer; $s.SetOutputToWaveFile('${outputPath}'); $s.Speak('${sanitized}'); $s.Dispose();`;
+        execSync(`powershell.exe -NoProfile -Command "${command}"`, { stdio: 'pipe' });
+    }
+    else{
+        console.log(voice)
+        if (!ELEVENLABS_API_KEY) {
+        throw new Error('Missing ELEVENLABS_API_KEY in environment variables');
+        }
+        const elevenlabs = new ElevenLabsClient();
+        const audio = await elevenlabs.textToSpeech.convert(
+            voice, // "George" - browse voices at elevenlabs.io/app/voice-library
+            {
+                text: text,
+                modelId: "eleven_multilingual_v2",
+                outputFormat: 'mp3_44100_128',
+            }
+);
+    }
 }
 
 function speakText(connection: VoiceConnection, text: string): void {

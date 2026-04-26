@@ -7,8 +7,8 @@ import { Lang } from '../../services/index.js';
 import { InteractionUtils } from '../../utils/index.js';
 import { Command, CommandDeferType } from '../index.js';
 import fs from 'node:fs';
-import { config } from 'node:process';
-var voicePath="../voice.json";
+
+var voicePath="./voice.json";
 export class SetVoiceCommand implements Command {
     public names = [Lang.getRef('chatCommands.set_voice', Language.Default)];
     public cooldown = new RateLimiter(1, 5000);

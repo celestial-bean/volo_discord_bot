@@ -106,9 +106,9 @@ export const ChatCommandMetadata: {
               description: 'Pick a voice',
               required: true,
               choices: [
-                { name: 'Adrian', value: 'Adrian' },
-                { name: 'Master Chief', value: 'Master Chief' },
-                { name: 'Loic', value: 'Loic' },
+                { name: 'Adrian', value: 'eci4ect7rJnch0aBnuFl' },
+                { name: 'Master Chief', value: 'XGIAXaYhHsL3BEYaggzl' },
+                { name: 'Loic', value: '66SzMmKbNMcSzFJPEyD6' },
               ],
             },
           ],

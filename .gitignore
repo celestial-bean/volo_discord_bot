@@ -5,6 +5,7 @@ Sessions/
 player_map.*
 recordings/
 player-map.*
+voice.json
 .venv/
 venv/
 .logs/
