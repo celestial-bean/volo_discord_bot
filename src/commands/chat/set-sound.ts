@@ -11,12 +11,6 @@ import { Command, CommandDeferType } from '../index.js';
 
 const soundsDirectory = './assets';
 
-function sanitizeSoundName(name: string): string {
-    // Keep it simple: safe filename, no directories.
-    const cleaned = name.trim().replace(/[^a-zA-Z0-9._-]/g, '_');
-    return cleaned.replace(/_+/g, '_').replace(/^_+|_+$/g, '') || 'sound';
-}
-
 async function downloadYouTubeMp3(url: string, outputPath: string): Promise<void> {
     await new Promise<void>((resolve, reject) => {
         const p = spawn(
@@ -97,8 +91,7 @@ export class SetSoundCommand implements Command {
     public requireClientPerms: PermissionsString[] = [];
 
     public async execute(intr: ChatInputCommandInteraction, _data: EventData): Promise<void> {
-        const soundRaw = intr.options.getString('sound', true);
-        const sound = sanitizeSoundName(soundRaw);
+        const sound= intr.options.getString('sound', true);
 
         const youtubeUrlRaw = intr.options.getString('youtube_url') ?? undefined;
         const youtubeUrl = youtubeUrlRaw?.trim() ? youtubeUrlRaw.trim() : undefined;
@@ -114,9 +107,14 @@ export class SetSoundCommand implements Command {
 
         if (youtubeUrl) {
             fs.mkdirSync(soundsDirectory, { recursive: true });
-            const outputPath = path.join(soundsDirectory, `${sound}.mp3`);
+            const outputPath = path.join(soundsDirectory, `${sound}`);
 
             try {
+                await InteractionUtils.send(
+                    intr,
+                    `Downloading audio from YouTube... This may take a moment.`,
+                    true
+                );
                 await downloadYouTubeMp3(youtubeUrl, outputPath);
             } catch (err) {
                 await InteractionUtils.send(
