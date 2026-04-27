@@ -331,7 +331,7 @@ const transcriptRules: TranscriptRule[] = [
             if (match) {
                 playerId = playerMap[match];
             }
-              
+
             if (playerId) {
                 const timeoutRole = config.roles.shutup;
                 var player: GuildMember = await guild.members.fetch(playerId);
@@ -366,7 +366,7 @@ function handleTranscriptTriggers(
 export class JoinCommand implements Command {
     public names = [Lang.getRef('chatCommands.join', Language.Default)];
 
-    public deferType = CommandDeferType.PUBLIC;
+    public deferType = CommandDeferType.HIDDEN;
 
     public requireClientPerms: PermissionsString[] = ['Connect', 'Speak'];
 
