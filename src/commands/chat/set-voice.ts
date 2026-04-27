@@ -1,4 +1,4 @@
-import { ChatInputCommandInteraction, PermissionsString } from 'discord.js';
+import { ChatInputCommandInteraction, Client, PermissionsString } from 'discord.js';
 import { RateLimiter } from 'discord.js-rate-limiter';
 
 import { Language } from '../../models/enum-helpers/index.js';
@@ -21,8 +21,8 @@ export class SetVoiceCommand implements Command {
             config = JSON.parse(fs.readFileSync(voicePath, 'utf8'));
           } else {
             config = { 
-              selectedVoice: "Default", 
-                "Default":{
+              selectedVoice: "The Listener", 
+                "The Listener":{
                 "id": "",
                 "speechSamples": "",
                 "description": "You're are a discord bot that can speak that moderates a discord server. Play a character that best fits the situation, your personality, and style.",
@@ -31,7 +31,7 @@ export class SetVoiceCommand implements Command {
             fs.writeFileSync(voicePath, JSON.stringify(config, null, 2), 'utf8');
           }
         config.selectedVoice = intr.options.getString('voice') || config.selectedVoice;
-        console.log(config);
+        await intr.guild.members.me.setNickname(config.selectedVoice);
         fs.writeFileSync(voicePath, JSON.stringify(config, null, 2));
         await InteractionUtils.send(intr, "Voice set to " + config.selectedVoice, true);
     }

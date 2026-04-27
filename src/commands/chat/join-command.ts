@@ -172,7 +172,7 @@ function logTranscript(userTag: string, transcript: string): void {
 async function synthesizeSpeech(text: string, outputPath: string): Promise<void> {
     const sanitized = text.replace(/'/g, "''").replace(/\r?\n/g, ' ');
     const voice = JSON.parse(fs.readFileSync('./voice.json', 'utf8')).selectedVoice;
-    if (voice == "Default") {
+    if (voice == "The Listener") {
         const command = `Add-Type -AssemblyName System.speech; $s = New-Object System.Speech.Synthesis.SpeechSynthesizer; $s.SetOutputToWaveFile('${outputPath}'); $s.Speak('${sanitized}'); $s.Dispose();`;
         execSync(`powershell.exe -NoProfile -Command "${command}"`, { stdio: 'pipe' });
     } else {

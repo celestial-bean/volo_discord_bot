@@ -109,7 +109,7 @@ export const ChatCommandMetadata: {
                 { name: 'Adrian', value: 'Adrian' },
                 { name: 'Master Chief', value: 'Master Chief'},
                 { name: 'Loic', value: 'Loic' },
-                { name: "Default", value: "Default"},
+                { name: "Default", value: "The Listener"}
               ],
             },
           ],
