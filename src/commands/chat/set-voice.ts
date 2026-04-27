@@ -20,11 +20,18 @@ export class SetVoiceCommand implements Command {
         if (fs.existsSync(voicePath)) {
             config = JSON.parse(fs.readFileSync(voicePath, 'utf8'));
           } else {
-            config = { voice: null }; // pick your defaults
+            config = { 
+              selectedVoice: "Default", 
+                "Default":{
+                "id": "",
+                "speechSamples": "",
+                "description": "You're are a discord bot that can speak that moderates a discord server. Play a character that best fits the situation, your personality, and style.",
+                } 
+              }; 
             fs.writeFileSync(voicePath, JSON.stringify(config, null, 2), 'utf8');
           }
-        config.voice = intr.options.getString('voice') || config.voice;
+        config.selectedVoice = intr.options.getString('voice') || config.selectedVoice;
         fs.writeFileSync(voicePath, JSON.stringify(config, null, 2));
-        await InteractionUtils.send(intr, "Voice set to " + config.voice, true);
+        await InteractionUtils.send(intr, "Voice set to " + config.selectedVoice, true);
     }
 }

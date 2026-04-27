@@ -47,20 +47,24 @@ const ELEVENLABS_API_KEY = config.api.elevenlabsKey;
 type PlayerMap = Record<string, string>;
 let playerMapCache: PlayerMap | null = null;
 
-function amplifyPCM(buffer: Buffer, gain: number): Buffer {
-    const output = Buffer.alloc(buffer.length);
-
-    for (let i = 0; i < buffer.length; i += 2) {
-        // assuming 16-bit PCM
-        let sample = buffer.readInt16LE(i);
-
-        // apply gain
-        sample = Math.max(-32768, Math.min(32767, sample * gain));
-
-        output.writeInt16LE(sample, i);
-    }
-
-    return output;
+async function chatGptRequest(prompt: string, model: string='gpt-4.1-mini', max_tokens: number = 200, voice: string=""): Promise<string> {
+    const voiceData = JSON.parse(fs.readFileSync('./voice.json', 'utf8'))[voice];
+    const speechSamples = voiceData?.speechSamples;
+    const voiceDescription = voiceData?.description;
+    const response = await openai.chat.completions.create({
+                model: model,
+                messages: [
+                    { role: "user", content: 
+                        voiceDescription+"; "+
+                        prompt+
+                        "; Use the following speech patterns from the samples: "+speechSamples
+                    },
+                ],
+                max_tokens: max_tokens,
+            });
+            const message = response.choices[0].message?.content;
+            console.log(`OpenAI response: ${message}`);   
+            return message;
 }
 
 function getPlayerMap(): PlayerMap {
@@ -113,10 +117,6 @@ async function transcribeAudio(pcmFilePath: string, wavFilePath: string): Promis
                 else reject(new Error(`ffmpeg exited with code ${code}`));
             });
         });
-        // Transcribe with Whisper
-        // execSync(`whisper "${wavFilePath}" --model small --output_format txt --device cuda --output_dir ./recordings`, {
-        //     encoding: 'utf-8',
-        // });
         await new Promise((resolve, reject) => {
             const p = spawn('whisper', [
                 wavFilePath,
@@ -171,8 +171,8 @@ function logTranscript(userTag: string, transcript: string): void {
 
 async function synthesizeSpeech(text: string, outputPath: string): Promise<void> {
     const sanitized = text.replace(/'/g, "''").replace(/\r?\n/g, ' ');
-    const voice = JSON.parse(fs.readFileSync('./voice.json', 'utf8')).voice;
-    if (voice == null) {
+    const voice = JSON.parse(fs.readFileSync('./voice.json', 'utf8')).selectedVoice;
+    if (voice == "Default") {
         const command = `Add-Type -AssemblyName System.speech; $s = New-Object System.Speech.Synthesis.SpeechSynthesizer; $s.SetOutputToWaveFile('${outputPath}'); $s.Speak('${sanitized}'); $s.Dispose();`;
         execSync(`powershell.exe -NoProfile -Command "${command}"`, { stdio: 'pipe' });
     } else {
@@ -197,8 +197,6 @@ async function synthesizeSpeech(text: string, outputPath: string): Promise<void>
             outputFormat: 'mp3_44100_128',
         });
         const nodeAudio = Readable.fromWeb(audio as unknown as globalThis.ReadableStream);
-
-        const fileStream = fs.createWriteStream(outputPath);
         await pipeline(nodeAudio, ff.stdin);
         await new Promise<void>((resolve, reject) => {
             ff.on('error', reject);
@@ -276,16 +274,7 @@ const transcriptRules: TranscriptRule[] = [
             console.log(`Trigger matched for ${user.tag}: summarize request -> ${transcript}`);
             var text: string = fs.readFileSync(`./recordings/transcripts.log`, 'utf8');
             text = text.split('\n').slice(-100).join('\n'); //get last 100 lines
-            const response = await openai.chat.completions.create({
-                model: 'gpt-4.1-mini',
-                messages: [
-                    { role: 'system', content: 'You are a discord member in a call.' },
-                    { role: 'user', content: 'please summarize this transcript: ' + text },
-                ],
-                max_tokens: 200,
-            });
-            const message = response.choices[0].message?.content;
-            console.log(`OpenAI response: ${message}`);
+            var message: string =await chatGptRequest(`Please summarize this transcript: ${text}`);
             speakText(connection!, message || "Sorry, I couldn't generate a summary.");
         },
     },
@@ -324,13 +313,14 @@ const transcriptRules: TranscriptRule[] = [
             console.log(`Trigger matched for ${user.tag}: shutup command -> ${transcript}`);
             var playerId;
             const playerMap = getPlayerMap();
-            const targetUser = transcript.split('kick')[1].split(' ')[0].toLowerCase();
+            const match = transcript.match(/shut up\s+(.+?)\.?$/i);
+            const targetUser = match?.[1]?.toLowerCase();
             console.log('Target: ' + targetUser);
-            const match = Object.keys(playerMap).find(name =>
+            const found = Object.keys(playerMap).find(name =>
                 name.toLowerCase().includes(targetUser)
             );
-            if (match) {
-                playerId = playerMap[match];
+            if (found) {
+                playerId = playerMap[found];
             }
 
             if (playerId) {

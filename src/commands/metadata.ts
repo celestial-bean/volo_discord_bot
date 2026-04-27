@@ -67,7 +67,7 @@ export const ChatCommandMetadata: {
         name_localizations: Lang.getRefLocalizationMap('chatCommands.join'),
         description: Lang.getRef('commandDescs.join', Language.Default),
         description_localizations: Lang.getRefLocalizationMap('commandDescs.join'),
-        dm_permission: false,
+        dm_permission: true,
         default_member_permissions: undefined,
     },
     TEST: {
@@ -85,7 +85,7 @@ export const ChatCommandMetadata: {
         name_localizations: Lang.getRefLocalizationMap('chatCommands.update_player_map'),
         description: Lang.getRef('commandDescs.update_player_map', Language.Default),
         description_localizations: Lang.getRefLocalizationMap('commandDescs.update_player_map'),
-        dm_permission: false,
+        dm_permission: true,
         default_member_permissions: PermissionsBitField.resolve([
             PermissionFlagsBits.Administrator,
         ]).toString(),
@@ -106,9 +106,10 @@ export const ChatCommandMetadata: {
               description: 'Pick a voice',
               required: true,
               choices: [
-                { name: 'Adrian', value: 'eci4ect7rJnch0aBnuFl' },
-                { name: 'Master Chief', value: 'XGIAXaYhHsL3BEYaggzl' },
-                { name: 'Loic', value: '66SzMmKbNMcSzFJPEyD6' },
+                { name: 'Adrian', value: 'Adrian' },
+                { name: 'Master Chief', value: 'Master Chief'},
+                { name: 'Loic', value: 'Loic' },
+                { name: "Default", value: "Default"},
               ],
             },
           ],
