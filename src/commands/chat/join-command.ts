@@ -297,7 +297,7 @@ const transcriptRules: TranscriptRule[] = [
         },
     },
     {
-        contentFilter: /hey\s+(bot|bob)[,\s]*kick/i,
+        contentFilter: /hey\s+(clanker|listener|bot|bob)[,\s]*kick/i,
         action: async (user, transcript, connection, guild: Guild) => {
             console.log(`Trigger matched for ${user.tag}: kick command -> ${transcript}`);
             var playerId;
@@ -331,7 +331,7 @@ const transcriptRules: TranscriptRule[] = [
             if (match) {
                 playerId = playerMap[match];
             }
-
+              
             if (playerId) {
                 const timeoutRole = config.roles.shutup;
                 var player: GuildMember = await guild.members.fetch(playerId);
