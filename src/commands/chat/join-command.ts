@@ -287,7 +287,14 @@ const transcriptRules: TranscriptRule[] = [
         contentFilter: /\b(?:dig(?:gin|ging) in (?:yo|your) butt)\b/i,
         action: async (user, transcript, connection) => {
             console.log(`Trigger matched for ${user.tag}: butt-related phrase -> ${transcript}`);
-            playSound(connection!, './assets/diggin_in_yo_butt.mp3');
+            playSound(connection!, './assets/digginInYoButt.mp3');
+        },
+    },
+    {
+        contentFilter: /what[\s\S]*the[\s\S]*sigma/i,
+        action: async (user, transcript, connection) => {
+            console.log(`Trigger matched for ${user.tag}: butt-related phrase -> ${transcript}`);
+            playSound(connection!, './assets/whatTheSigma.mp3');
         },
     },
     {

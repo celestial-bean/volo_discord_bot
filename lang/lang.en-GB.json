@@ -194,6 +194,7 @@
             "help": "help",
             "info": "info",
             "join": "join",
+            "set_sound": "set_sound",
             "test": "test",
             "update_player_map": "update_player_map",
             "set_voice": "set_voice"
@@ -214,6 +215,7 @@
             "help": "Find help or contact support.",
             "info": "View bot info.",
             "join": "Join a voice channel.",
+            "set_sound": "Set the sound to be used (optionally from a YouTube URL).",
             "test": "Run the test command.",
             "update_player_map": "Updates the player map",
             "set_voice":"Set the voice to be used"

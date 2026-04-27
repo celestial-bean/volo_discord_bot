@@ -3,6 +3,7 @@ export { GenerateTranscriptCommand } from './generate-transcript.js';
 export { HelpCommand } from './help-command.js';
 export { InfoCommand } from './info-command.js';
 export { JoinCommand } from './join-command.js';
+export { SetSoundCommand } from './set-sound.js';
 export { TestCommand } from './test-command.js';
 export { UpdatePlayerMapCommand } from './update-player-map.js';
 export { SetVoiceCommand } from './set-voice.js';

@@ -23,6 +23,35 @@ export const ChatCommandMetadata: {
         dm_permission: true,
         default_member_permissions: undefined,
     },
+    SET_SOUND: {
+        type: ApplicationCommandType.ChatInput,
+        name: Lang.getRef('chatCommands.set_sound', Language.Default),
+        name_localizations: Lang.getRefLocalizationMap('chatCommands.set_sound'),
+        description: Lang.getRef('commandDescs.set_sound', Language.Default),
+        description_localizations: Lang.getRefLocalizationMap('commandDescs.set_sound'),
+        dm_permission: true,
+        default_member_permissions: undefined,
+        
+          
+        options: [
+            {
+                type: ApplicationCommandOptionType.String,
+                name: 'sound',
+                description: 'Sound to set',
+                required: true,
+              choices: [
+                { name: 'Diggin in yo butt', value: 'digginInYoButt.mp3' },
+                {name: "What the Sigma", value: "whatTheSigma.mp3"}
+              ],
+            },
+            {
+                type: ApplicationCommandOptionType.String,
+                name: 'youtube_url',
+                description: 'YouTube URL',
+                required: true,
+            },
+        ],
+    },
     DEV: {
         type: ApplicationCommandType.ChatInput,
         name: Lang.getRef('chatCommands.dev', Language.Default),
