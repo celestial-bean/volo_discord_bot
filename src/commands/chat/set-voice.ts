@@ -31,6 +31,7 @@ export class SetVoiceCommand implements Command {
             fs.writeFileSync(voicePath, JSON.stringify(config, null, 2), 'utf8');
           }
         config.selectedVoice = intr.options.getString('voice') || config.selectedVoice;
+        console.log(config);
         fs.writeFileSync(voicePath, JSON.stringify(config, null, 2));
         await InteractionUtils.send(intr, "Voice set to " + config.selectedVoice, true);
     }
