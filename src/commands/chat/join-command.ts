@@ -47,24 +47,25 @@ const ELEVENLABS_API_KEY = config.api.elevenlabsKey;
 type PlayerMap = Record<string, string>;
 let playerMapCache: PlayerMap | null = null;
 
-async function chatGptRequest(prompt: string, model: string='gpt-4.1-mini', max_tokens: number = 200, voice: string=""): Promise<string> {
+async function chatGptRequest(prompt: string, model: string = 'gpt-4.1-mini', max_tokens: number = 200, voice: string = ""): Promise<string> {
     const voiceData = JSON.parse(fs.readFileSync('./voice.json', 'utf8'))[voice];
     const speechSamples = voiceData?.speechSamples;
     const voiceDescription = voiceData?.description;
     const response = await openai.chat.completions.create({
-                model: model,
-                messages: [
-                    { role: "user", content: 
-                        voiceDescription+"; "+
-                        prompt+
-                        "; Use the following speech patterns from the samples: "+speechSamples
-                    },
-                ],
-                max_tokens: max_tokens,
-            });
-            const message = response.choices[0].message?.content;
-            console.log(`OpenAI response: ${message}`);   
-            return message;
+        model: model,
+        messages: [
+            {
+                role: "user", content:
+                    voiceDescription + "; " +
+                    prompt +
+                    "; Use the following speech patterns from the samples: " + speechSamples
+            },
+        ],
+        max_tokens: max_tokens,
+    });
+    const message = response.choices[0].message?.content;
+    console.log(`OpenAI response: ${message}`);
+    return message;
 }
 
 function getPlayerMap(): PlayerMap {
@@ -128,6 +129,10 @@ async function transcribeAudio(pcmFilePath: string, wavFilePath: string): Promis
                 'cuda',
                 '--output_dir',
                 './recordings',
+                '--no_speech_threshold',
+                '.8',
+                '--logprob_threshold',
+                '.9'
             ]);
 
             p.on('error', reject);
@@ -274,7 +279,7 @@ const transcriptRules: TranscriptRule[] = [
             console.log(`Trigger matched for ${user.tag}: summarize request -> ${transcript}`);
             var text: string = fs.readFileSync(`./recordings/transcripts.log`, 'utf8');
             text = text.split('\n').slice(-100).join('\n'); //get last 100 lines
-            var message: string =await chatGptRequest(`Please summarize this transcript: ${text}`);
+            var message: string = await chatGptRequest(`Please summarize this transcript: ${text}`);
             speakText(connection!, message || "Sorry, I couldn't generate a summary.");
         },
     },
@@ -387,7 +392,7 @@ export class JoinCommand implements Command {
 
         const botMember = channel.guild.members.me;
         const botPermissions = botMember?.permissionsIn(channel);
-        console.log('Bot voice permissions:', botPermissions?.toArray());
+        // console.log('Bot voice permissions:', botPermissions?.toArray());
         if (!botPermissions?.has('Connect') || !botPermissions?.has('Speak')) {
             await InteractionUtils.send(
                 intr,

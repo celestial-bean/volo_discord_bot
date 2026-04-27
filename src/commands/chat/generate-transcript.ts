@@ -15,13 +15,13 @@ export class GenerateTranscriptCommand implements Command {
     public async execute(intr: ChatInputCommandInteraction, _data: EventData): Promise<void> {
         const transcriptPath = './recordings/transcripts.log';
         if (!fs.existsSync(transcriptPath)) {
-            await InteractionUtils.send(intr, 'No transcript log found yet.', true);
+            await InteractionUtils.send(intr, 'No transcript log found yet.');
             return;
         }
 
         const text = fs.readFileSync(transcriptPath, 'utf8');
         if (!text.trim()) {
-            await InteractionUtils.send(intr, 'Transcript log is empty.', true);
+            await InteractionUtils.send(intr, 'Transcript log is empty.');
             return;
         }
 
@@ -34,8 +34,7 @@ export class GenerateTranscriptCommand implements Command {
             {
                 content: 'Here is the current transcript log.',
                 files: [attachment],
-            },
-            true
+            }
         );
     }
 }
