@@ -1,4 +1,5 @@
 export { DevCommand } from './dev-command.js';
+export { GenerateTranscriptCommand } from './generate-transcript.js';
 export { HelpCommand } from './help-command.js';
 export { InfoCommand } from './info-command.js';
 export { JoinCommand } from './join-command.js';

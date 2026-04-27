@@ -14,6 +14,15 @@ import { Lang } from '../services/index.js';
 export const ChatCommandMetadata: {
     [command: string]: RESTPostAPIChatInputApplicationCommandsJSONBody;
 } = {
+    GENERATE_TRANSCRIPT: {
+        type: ApplicationCommandType.ChatInput,
+        name: Lang.getRef('chatCommands.generate_transcript', Language.Default),
+        name_localizations: Lang.getRefLocalizationMap('chatCommands.generate_transcript'),
+        description: Lang.getRef('commandDescs.generate_transcript', Language.Default),
+        description_localizations: Lang.getRefLocalizationMap('commandDescs.generate_transcript'),
+        dm_permission: true,
+        default_member_permissions: undefined,
+    },
     DEV: {
         type: ApplicationCommandType.ChatInput,
         name: Lang.getRef('chatCommands.dev', Language.Default),

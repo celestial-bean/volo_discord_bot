@@ -190,6 +190,7 @@
         },
         "chatCommands": {
             "dev": "dev",
+            "generate_transcript": "generate_transcript",
             "help": "help",
             "info": "info",
             "join": "join",
@@ -209,6 +210,7 @@
         },
         "commandDescs": {
             "dev": "Developer use only.",
+            "generate_transcript": "Generate a transcript log file.",
             "help": "Find help or contact support.",
             "info": "View bot info.",
             "join": "Join a voice channel.",
