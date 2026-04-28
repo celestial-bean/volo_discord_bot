@@ -5,7 +5,7 @@ import { Language } from '../../models/enum-helpers/index.js';
 import { Lang } from '../../services/index.js';
 import { InteractionUtils } from '../../utils/index.js';
 import prism from 'prism-media';
-import fs from 'fs';
+import fs, { appendFile } from 'fs';
 import { execSync, spawn } from 'child_process';
 import OpenAI from 'openai';
 import { createRequire } from 'module';
@@ -46,6 +46,7 @@ const ELEVENLABS_API_KEY = config.api.elevenlabsKey;
 
 type PlayerMap = Record<string, string>;
 let playerMapCache: PlayerMap | null = null;
+var voiceCache: { selectedVoice: string } = { selectedVoice: "The Listener" };
 
 async function chatGptRequest(prompt: string, model: string = 'gpt-4.1-mini', max_tokens: number = 200, voice: string = ""): Promise<string> {
     const voiceData = JSON.parse(fs.readFileSync('./voice.json', 'utf8'))[voice];
@@ -56,9 +57,10 @@ async function chatGptRequest(prompt: string, model: string = 'gpt-4.1-mini', ma
         messages: [
             {
                 role: "user", content:
-                    voiceDescription + "; " +
+                    voiceDescription +
+                    "; context: " +
                     prompt +
-                    "; Use the following speech patterns from the samples: " + speechSamples
+                    "; Use the following speech patterns from the samples if available: " + speechSamples
             },
         ],
         max_tokens: max_tokens,
@@ -130,9 +132,9 @@ async function transcribeAudio(pcmFilePath: string, wavFilePath: string): Promis
                 '--output_dir',
                 './recordings',
                 '--no_speech_threshold',
-                '.8',
+                '.3',
                 '--logprob_threshold',
-                '.9'
+                '-.8'
             ]);
 
             p.on('error', reject);
@@ -176,7 +178,10 @@ function logTranscript(userTag: string, transcript: string): void {
 
 async function synthesizeSpeech(text: string, outputPath: string): Promise<void> {
     const sanitized = text.replace(/'/g, "''").replace(/\r?\n/g, ' ');
-    const voice = JSON.parse(fs.readFileSync('./voice.json', 'utf8')).selectedVoice;
+    const voiceData = JSON.parse(fs.readFileSync('./voice.json', 'utf8'));
+    const voice = voiceData.selectedVoice;
+    const voiceId = voiceData[voice].id;
+    voiceCache.selectedVoice = voice;
     if (voice == "The Listener") {
         const command = `Add-Type -AssemblyName System.speech; $s = New-Object System.Speech.Synthesis.SpeechSynthesizer; $s.SetOutputToWaveFile('${outputPath}'); $s.Speak('${sanitized}'); $s.Dispose();`;
         execSync(`powershell.exe -NoProfile -Command "${command}"`, { stdio: 'pipe' });
@@ -191,12 +196,12 @@ async function synthesizeSpeech(text: string, outputPath: string): Promise<void>
             '-i',
             'pipe:0',
             '-filter:a',
-            'volume=2.0', // 2x louder; try 1.5, 3.0, etc
+            `volume=${voice == "Adrian" ? 2.0 : 1.0}`,
             '-y',
             outputPath,
         ]);
         const elevenlabs = new ElevenLabsClient({ apiKey: ELEVENLABS_API_KEY });
-        const audio = await elevenlabs.textToSpeech.convert(voice, {
+        const audio = await elevenlabs.textToSpeech.convert(voiceId, {
             text: text,
             modelId: 'eleven_multilingual_v2',
             outputFormat: 'mp3_44100_128',
@@ -278,13 +283,13 @@ const transcriptRules: TranscriptRule[] = [
         action: async (user, transcript, connection) => {
             console.log(`Trigger matched for ${user.tag}: summarize request -> ${transcript}`);
             var text: string = fs.readFileSync(`./recordings/transcripts.log`, 'utf8');
-            text = text.split('\n').slice(-100).join('\n'); //get last 100 lines
+            text = text.split('\n').slice(-75).join('\n'); //get last 100 lines
             var message: string = await chatGptRequest(`Please summarize this transcript: ${text}`);
             speakText(connection!, message || "Sorry, I couldn't generate a summary.");
         },
     },
     {
-        contentFilter: /\b(?:dig(?:gin|ging) in (?:yo|your) butt)\b/i,
+        contentFilter: /\b(?:dig(?:gin|ging) in (?:yo|your|my) butt)\b/i,
         action: async (user, transcript, connection) => {
             console.log(`Trigger matched for ${user.tag}: butt-related phrase -> ${transcript}`);
             playSound(connection!, './assets/digginInYoButt.mp3');
@@ -298,24 +303,34 @@ const transcriptRules: TranscriptRule[] = [
         },
     },
     {
-        contentFilter: /hey[\s\S]*(clanker|listener|bot|bob)[\s\S]*kick/i,
+        contentFilter: /hey.*(Kleiker|klinker|klinka|clanker|clinker|listener|bot|bob)/i,
         action: async (user, transcript, connection, guild: Guild) => {
-            console.log(`Trigger matched for ${user.tag}: kick command -> ${transcript}`);
+            console.log(`Trigger matched for ${user.tag}: clanker called -> ${transcript}`);
             var playerId;
             const playerMap = getPlayerMap();
             const match = transcript.match(/kick\s+(.+?)\.?$/i);
-            const targetUser = match?.[1]?.toLowerCase();
-            console.log('Target: ' + targetUser);
-            const found = Object.keys(playerMap).find(name =>
-                name.toLowerCase().includes(targetUser)
-            );
-            if (found) {
-                playerId = playerMap[found];
-            }
+            if (match) {
+                const targetUser = match?.[1]?.toLowerCase();
+                console.log('Target: ' + targetUser);
+                const found = Object.keys(playerMap).find(name =>
+                    name.toLowerCase().includes(targetUser)
+                );
+                if (found) {
+                    playerId = playerMap[found];
+                }
 
-            if (playerId) {
-                var player: GuildMember = await guild.members.fetch(playerId);
-                await player.voice.disconnect();
+                if (playerId) {
+                    var player: GuildMember = await guild.members.fetch(playerId);
+                    await player.voice.disconnect();
+                }
+            } else {
+                var text = transcript.split('\n').slice(-25).join('\n'); //get last 100 lines
+                var message: string = await chatGptRequest(text);
+                speakText(connection!, message);
+                await appendFile('./recordings/transcripts.log', voiceCache.selectedVoice+": "+message+"\n", (err) => {
+                    if (err) throw err;
+                    console.log('The "data to append" was appended to file!');
+                });
             }
         },
     },
@@ -481,7 +496,6 @@ export class JoinCommand implements Command {
             activeStreams.set(userId, { opusStream, pcmStream, file, filePath });
 
             opusStream.on('end', () => {
-                console.log(`END: ${speakingMember?.user.tag ?? userId}`);
 
                 const active = activeStreams.get(userId);
                 if (!active) {
